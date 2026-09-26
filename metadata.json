@@ -1,0 +1,6 @@
+{
+  "name": "立方體探險家：國小四年級 3D 體積空間冒險",
+  "description": "專為國小四年級設計的素養導向 3D 體積學習網頁。透過 360° 旋轉、分層拆解、X光透視、點擊計數、3-Step 漸進鷹架與自由積木實驗室，破除隱藏積木迷思，建立穩固空間概念！",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

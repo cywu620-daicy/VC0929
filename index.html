@@ -1,0 +1,2983 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>立方體探險家：國小四年級 3D 體積空間冒險</title>
+  <meta name="description" content="專為國小四年級設計的素養導向 3D 體積學習網頁。透過 360° 旋轉、分層拆解、X光透視、點擊計數、3-Step 漸進鷹架與自由積木實驗室，破除隱藏積木迷思，建立穩固空間概念！" />
+  <meta property="og:title" content="立方體探險家：國小四年級 3D 體積空間冒險" />
+  <meta property="og:description" content="專為國小四年級設計的素養導向 3D 體積學習網頁。透過 360° 旋轉、分層拆解、X光透視、點擊計數、3-Step 漸進鷹架與自由積木實驗室，破除隱藏積木迷思，建立穩固空間概念！" />
+  <meta property="og:type" content="website" />
+
+  <!-- CDNs as specified -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', '"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', '"Noto Sans TC"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            amber: { 450: '#F59E0B' },
+            brand: {
+              50: '#EEF2FF',
+              500: '#4F46E5',
+              600: '#4338CA',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans TC', 'Plus Jakarta Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #F8FAFC;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F1F5F9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- Top Bar Contract (1 Row, 3 Zones) -->
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 px-4 lg:px-8 py-3 transition-shadow">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <!-- Zone 1: Single text element brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+          <i class="fa-solid fa-cube text-lg"></i>
+        </div>
+        <div>
+          <span class="text-lg lg:text-xl font-bold tracking-tight text-slate-900 font-display">立方體探險家</span>
+          <span class="text-xs text-slate-500 hidden sm:inline ml-2 font-medium">國小四年級 · 3D 體積空間冒險</span>
+        </div>
+      </div>
+
+      <!-- Zone 2: Navigation Links (Requested Order: 生活情境導航 -> 體積概念大解密 -> 自由積木實驗室 -> 體積挑戰館 -> 學習歷程與 AI 報告) -->
+      <nav class="hidden md:flex items-center gap-5 text-sm font-medium text-slate-600">
+        <button onclick="switchTab('context')" id="nav-btn-context" class="hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-indigo-600 font-semibold whitespace-nowrap">
+          <i class="fa-solid fa-lightbulb text-xs"></i> 生活情境導航
+        </button>
+        <button onclick="switchTab('concept')" id="nav-btn-concept" class="hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-slate-600 whitespace-nowrap">
+          <i class="fa-solid fa-book-open text-xs"></i> 體積概念大解密
+        </button>
+        <button onclick="switchTab('sandbox')" id="nav-btn-sandbox" class="hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-slate-600 whitespace-nowrap">
+          <i class="fa-solid fa-cubes-stacked text-xs"></i> 自由積木實驗室
+        </button>
+        <button onclick="switchTab('arena')" id="nav-btn-arena" class="hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-slate-600 whitespace-nowrap">
+          <i class="fa-solid fa-gamepad text-xs"></i> 體積挑戰館
+        </button>
+        <button onclick="switchTab('dashboard')" id="nav-btn-dashboard" class="hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-slate-600 whitespace-nowrap">
+          <i class="fa-solid fa-chart-pie text-xs"></i> 學習歷程與 AI 報告
+        </button>
+      </nav>
+
+      <!-- Zone 3: Gamification Stats & Quick Actions -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 border border-slate-200/80">
+          <span class="text-amber-500 font-bold flex items-center gap-1 text-sm font-mono">
+            <i class="fa-solid fa-droplet text-cyan-500 animate-pulse"></i>
+            <span id="xp-display">120</span> <span class="text-xs text-slate-500 font-sans font-normal">XP</span>
+          </span>
+          <span class="text-slate-300">|</span>
+          <span class="text-emerald-600 font-bold flex items-center gap-1 text-sm font-mono">
+            <i class="fa-solid fa-fire text-orange-500"></i>
+            <span id="combo-display">0</span> <span class="text-xs text-slate-500 font-sans font-normal">連勝</span>
+          </span>
+        </div>
+        <button onclick="toggleAudio()" id="btn-audio" title="切換音效" class="w-9 h-9 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center text-sm transition-colors">
+          <i class="fa-solid fa-volume-high" id="audio-icon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Tab Bar -->
+  <div class="md:hidden bg-white border-b border-slate-200 px-3 py-2 flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs font-medium sticky top-[61px] z-30 shadow-xs">
+    <button onclick="switchTab('context')" id="mob-nav-btn-context" class="px-3 py-1.5 rounded-lg whitespace-nowrap bg-indigo-50 text-indigo-700 font-bold">生活情境導航</button>
+    <button onclick="switchTab('concept')" id="mob-nav-btn-concept" class="px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 hover:bg-slate-100">體積概念大解密</button>
+    <button onclick="switchTab('sandbox')" id="mob-nav-btn-sandbox" class="px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 hover:bg-slate-100">自由積木實驗室</button>
+    <button onclick="switchTab('arena')" id="mob-nav-btn-arena" class="px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 hover:bg-slate-100">體積挑戰館</button>
+    <button onclick="switchTab('dashboard')" id="mob-nav-btn-dashboard" class="px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 hover:bg-slate-100">學習歷程與 AI 報告</button>
+  </div>
+
+  <!-- Main Container -->
+  <main id="app-container" class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- SECTION 4: 體積挑戰館 (Arena) -->
+    <div id="section-arena" class="view-section hidden">
+      <!-- Top Guidance & Level Selector -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-indigo-600 uppercase">
+            <span id="level-badge" class="px-2.5 py-1 bg-indigo-50 border border-indigo-200/60 rounded-md text-indigo-700 font-bold">
+              Level 2 · 標準挑戰梯隊
+            </span>
+            <span class="text-slate-400">·</span>
+            <span id="question-category" class="text-slate-600">階梯複合形體與隱藏積木</span>
+          </div>
+          <h1 id="question-title" class="text-2xl lg:text-3xl font-bold text-slate-900 mt-1.5 font-display">
+            這個立體模型由幾個 1 cm³ 的正方體積木堆成？體積是多少？
+          </h1>
+        </div>
+
+        <div class="flex items-center gap-2 self-start lg:self-auto">
+          <!-- Level switcher buttons -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-medium">
+            <button onclick="setLevel(1)" id="btn-lvl-1" class="px-3 py-1.5 rounded-lg transition-colors text-slate-600 hover:text-slate-900">
+              L1 基礎長方體
+            </button>
+            <button onclick="setLevel(2)" id="btn-lvl-2" class="px-3 py-1.5 rounded-lg transition-colors bg-white text-indigo-600 shadow-xs font-semibold">
+              L2 階梯隱藏積木
+            </button>
+            <button onclick="setLevel(3)" id="btn-lvl-3" class="px-3 py-1.5 rounded-lg transition-colors text-slate-600 hover:text-slate-900">
+              L3 進階不規則
+            </button>
+          </div>
+          <!-- TTS Read Aloud Button -->
+          <button onclick="readCurrentQuestion()" id="btn-tts" class="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs transition-colors flex items-center gap-1.5 text-xs font-medium" title="語音朗讀題目與鷹架提問">
+            <i class="fa-solid fa-volume-high text-indigo-600"></i>
+            <span class="hidden sm:inline">朗讀題目</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Interactive 2-Zone Workspace -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Zone: 3D Stage & Spatial Toolbars (7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-3">
+          <div class="relative bg-slate-900 rounded-2xl overflow-hidden shadow-md border border-slate-800 h-[420px] sm:h-[480px] lg:h-[520px] w-full flex items-center justify-center select-none group">
+            
+            <!-- 3D Canvas Mount -->
+            <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+            <!-- Top Left HUD: 3D Preset Camera Views -->
+            <div class="absolute top-4 left-4 flex flex-wrap items-center gap-1.5 bg-slate-900/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10 z-10 text-xs">
+              <span class="text-slate-400 px-2 font-mono text-[11px] hidden sm:inline">視角</span>
+              <button onclick="setCameraView('front')" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors">
+                正面
+              </button>
+              <button onclick="setCameraView('side')" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors">
+                側面
+              </button>
+              <button onclick="setCameraView('top')" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors">
+                鳥瞰
+              </button>
+              <button onclick="setCameraView('iso')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors">
+                預設俯角
+              </button>
+              <button onclick="resetCameraAndZoom()" title="重置視角與縮放" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-arrows-rotate text-xs"></i>
+              </button>
+            </div>
+
+            <!-- Top Right HUD: Click-to-Count & X-Ray Mode Toggles -->
+            <div class="absolute top-4 right-4 flex items-center gap-2 z-10">
+              <!-- Click to count toggle -->
+              <button onclick="toggleCountMode()" id="btn-count-mode" class="px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-slate-800/90 text-slate-200 border-white/10 hover:bg-slate-700">
+                <i class="fa-solid fa-hand-pointer text-indigo-400"></i>
+                <span>標記計數模式：<span id="count-mode-status">關閉</span></span>
+                <span id="marked-count-badge" class="ml-1 px-1.5 py-0.2 rounded bg-indigo-500 text-white text-[11px] font-mono hidden">0</span>
+              </button>
+
+              <!-- X-Ray toggle -->
+              <button onclick="toggleXrayMode()" id="btn-xray-mode" class="px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-slate-800/90 text-slate-200 border-white/10 hover:bg-slate-700">
+                <i class="fa-solid fa-eye text-cyan-400"></i>
+                <span>X光透視：<span id="xray-mode-status">關閉</span></span>
+              </button>
+            </div>
+
+            <!-- Bottom Left HUD: Gesture Guidance -->
+            <div class="absolute bottom-4 left-4 z-10 pointer-events-none">
+              <div class="bg-black/50 backdrop-blur-sm text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-xs flex items-center gap-2">
+                <i class="fa-solid fa-arrow-rotate-right text-indigo-400"></i>
+                <span>按住滑鼠或手指滑動可 360° 旋轉模型</span>
+              </div>
+            </div>
+
+            <!-- Bottom Right HUD: Marked Cubes Reset -->
+            <div class="absolute bottom-4 right-4 z-10 flex items-center gap-2">
+              <button onclick="clearMarkedCubes()" id="btn-clear-marked" class="hidden px-2.5 py-1.5 rounded-lg text-xs bg-slate-800/90 text-slate-300 hover:text-white border border-white/10 backdrop-blur-sm transition-colors">
+                <i class="fa-solid fa-eraser mr-1"></i> 清除標記
+              </button>
+            </div>
+          </div>
+
+          <!-- Exploded Layer View Slider Controller Deck -->
+          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center gap-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto shrink-0">
+              <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-layer-group text-sm"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  分層拆解拉桿
+                  <span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/60 font-medium">透視隱藏積木</span>
+                </div>
+                <div class="text-xs text-slate-500">拉動滑桿垂直拉開積木層，看清被壓在底下的方塊</div>
+              </div>
+            </div>
+
+            <!-- Slider Control -->
+            <div class="flex-1 w-full flex items-center gap-3">
+              <span class="text-xs font-mono text-slate-400 shrink-0">緊合</span>
+              <input type="range" id="layer-slider" min="0" max="100" value="0" oninput="onLayerSliderChange(this.value)" class="w-full accent-indigo-600 cursor-pointer h-2 bg-slate-100 rounded-lg" />
+              <span class="text-xs font-mono text-indigo-600 font-bold shrink-0">分層拉開</span>
+              <button onclick="resetLayerSlider()" class="p-1.5 text-slate-400 hover:text-slate-700 text-xs rounded transition-colors" title="重置拉桿">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Zone: Cognitive Diagnostic, Input & 3-Step Scaffolding Deck (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          
+          <!-- Answer Input Card -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-indigo-600"></i>
+              輸入你的計算結果
+            </h2>
+            <p class="text-xs text-slate-500 mb-4">
+              每個小正方體邊長為 1 cm，體積為 1 cm³。請填入數量與體積：
+            </p>
+
+            <!-- Input fields -->
+            <div class="flex flex-col gap-3">
+              <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 flex items-center justify-between gap-3">
+                <label for="input-count" class="text-sm font-semibold text-slate-700">積木總數量：</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="input-count" placeholder="例如：12" class="w-24 px-3 py-2 text-center text-lg font-bold font-mono bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900" />
+                  <span class="text-sm text-slate-600 font-medium">個</span>
+                </div>
+              </div>
+
+              <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 flex items-center justify-between gap-3">
+                <label for="input-volume" class="text-sm font-semibold text-slate-700">立體形體體積：</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="input-volume" placeholder="例如：12" class="w-24 px-3 py-2 text-center text-lg font-bold font-mono bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900" />
+                  <span class="text-sm text-slate-600 font-medium font-mono font-bold">cm³</span>
+                </div>
+              </div>
+
+              <button onclick="submitAnswer()" id="btn-submit" class="w-full mt-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-base shadow-sm transition-all flex items-center justify-center gap-2">
+                <span>檢查答案</span>
+                <i class="fa-solid fa-arrow-right text-sm"></i>
+              </button>
+            </div>
+
+            <!-- Quick Auto-sync helper -->
+            <div class="mt-3 text-center">
+              <button onclick="autoFillVolume()" class="text-xs text-indigo-600 hover:underline">
+                提示：1 個正方體就是 1 cm³，兩格數值會一樣喔！
+              </button>
+            </div>
+          </div>
+
+          <!-- Misconception Cognitive Conflict Banner (Hidden by default, shown upon typical mistake) -->
+          <div id="misconception-banner" class="hidden bg-amber-50 border-2 border-amber-400/80 rounded-2xl p-5 shadow-xs transition-all">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-base font-bold text-amber-950 font-display">
+                    🚨 抓住關鍵盲點：你數的是表面，還是全部？
+                  </h3>
+                  <button onclick="readAloudMisconception()" class="text-amber-800 hover:text-amber-950 text-xs flex items-center gap-1 font-medium">
+                    <i class="fa-solid fa-volume-high"></i> 朗讀
+                  </button>
+                </div>
+                <p id="misconception-text" class="text-sm text-amber-900 mt-1.5 leading-relaxed">
+                  你輸入的數字剛好是「表面看得見的積木數量」！
+                  <br>
+                  仔細想一想：在地球上有重力，就像在《Minecraft》蓋二樓房間一樣，如果二樓底下的積木是空的，二樓的積木會不會掉下來呢？
+                  <br>
+                  <strong class="font-bold underline text-amber-950">二樓底下其實藏著好幾顆支撐積木！</strong> 請用「分層拆解拉桿」拉開看看吧！
+                </p>
+                <div class="mt-3 flex gap-2">
+                  <button onclick="triggerAutoInspectMisconception()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 幫我打開 X 光透視與分層
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3-Step Progressive Scaffolding Card -->
+          <div id="scaffold-card" class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                <h3 class="text-sm font-bold text-slate-900">三階段漸進思考鷹架</h3>
+              </div>
+              <span id="scaffold-step-label" class="text-xs text-slate-500 font-medium">
+                準備就緒
+              </span>
+            </div>
+
+            <div id="scaffold-content" class="text-sm text-slate-600 leading-relaxed min-h-[85px] flex flex-col justify-center bg-slate-50 rounded-xl p-4 border border-slate-100">
+              答錯時別灰心，系統不會直接公佈答案，而是提供三層引導問題，一步步帶你找出隱藏的方塊！
+            </div>
+
+            <!-- Dynamic Interactive Scaffold Actions (e.g. fill in the layer breakdown formula) -->
+            <div id="scaffold-interactive" class="hidden mt-3 pt-3 border-t border-slate-100"></div>
+
+            <!-- Next Question / Continue Bar -->
+            <div id="success-banner" class="hidden mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-900">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
+                  <div>
+                    <div class="font-bold text-base text-emerald-950">太棒了！完全答對！</div>
+                    <div class="text-xs text-emerald-700">獲得 +30 XP 能量水滴，連勝紀錄 +1！</div>
+                  </div>
+                </div>
+                <button onclick="nextQuestion()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-1.5 shadow-xs">
+                  <span>下一題</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: 3D 自由積木實驗室 (Sandbox) -->
+    <div id="section-sandbox" class="view-section hidden">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-indigo-600 uppercase">
+            <span class="px-2.5 py-1 bg-indigo-50 border border-indigo-200/60 rounded-md text-indigo-700 font-bold">
+              3D 自由方塊實驗室
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="text-slate-600">任意堆疊積木，直觀體驗長寬高與體積變化</span>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mt-1.5 font-display">
+            自由堆疊區：動手打造你的 3D 積木建築
+          </h1>
+        </div>
+
+        <!-- Sandbox Quick Presets -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="loadSandboxPreset('single')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
+            1 顆單位方塊
+          </button>
+          <button onclick="loadSandboxPreset('cuboid')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
+            長方體
+          </button>
+          <button onclick="loadSandboxPreset('stairs')" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors">
+            雙層階梯
+          </button>
+          <button onclick="clearSandbox()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-50 text-rose-700 border border-rose-200/60 hover:bg-rose-100 transition-colors">
+            <i class="fa-solid fa-trash-can mr-1"></i> 全部清空
+          </button>
+        </div>
+      </div>
+
+      <!-- Sandbox Grid Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8 bg-slate-900 rounded-2xl overflow-hidden shadow-md border border-slate-800 h-[480px] lg:h-[560px] relative">
+          <div id="sandbox-three-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+          
+          <div class="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur-md p-2 rounded-xl border border-white/10 text-xs text-slate-300 flex flex-col gap-1">
+            <div class="font-bold text-white flex items-center gap-1.5">
+              <i class="fa-solid fa-mouse-pointer text-indigo-400"></i> 操作說明：
+            </div>
+            <div>點擊下方控制板「增加/減少」積木，或直接在 3D 空間中觀察！</div>
+          </div>
+        </div>
+
+        <!-- Sandbox Metric Inspector (4 Cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-4">
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            <h2 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-ruler-combined text-indigo-600"></i>
+              即時空間數值量測儀
+            </h2>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <span class="text-sm text-slate-600 font-medium">總積木個數：</span>
+                <span id="sb-count" class="text-2xl font-bold font-mono text-indigo-600">1</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <span class="text-sm text-slate-600 font-medium">總佔據體積：</span>
+                <span id="sb-volume" class="text-2xl font-bold font-mono text-emerald-600">1 <span class="text-sm font-sans">$\text{cm}^3$</span></span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <span class="text-sm text-slate-600 font-medium">外框長寬高：</span>
+                <span id="sb-dims" class="text-sm font-bold font-mono text-slate-800">1 × 1 × 1 cm</span>
+              </div>
+            </div>
+
+            <!-- Layer Breakdown Table in Sandbox -->
+            <div class="mt-4 pt-4 border-t border-slate-200">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">垂直分層統計：</h3>
+              <div id="sb-layer-breakdown" class="space-y-1.5 text-xs text-slate-600">
+                <div class="flex justify-between p-2 bg-slate-50 rounded-lg">
+                  <span>第 1 層 (底層)</span>
+                  <span class="font-mono font-bold text-slate-900">1 顆 ($1\text{ cm}^3$)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sandbox Quick Build Actions -->
+            <div class="mt-5 space-y-2">
+              <button onclick="addSandboxLayer()" class="w-full py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 border border-indigo-200/60">
+                <i class="fa-solid fa-layer-group"></i> 往上加疊一層積木 (增加高度)
+              </button>
+              <button onclick="addSandboxRandomCube()" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-plus"></i> 在隨機有效位置放 1 顆積木
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: 生活情境導航 (Real-life Contexts) -->
+    <div id="section-context" class="view-section">
+      <div class="max-w-4xl mx-auto space-y-8">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-indigo-600 uppercase">
+            <span class="px-2.5 py-1 bg-indigo-50 border border-indigo-200/60 rounded-md text-indigo-700 font-bold">
+              素養導向學習生活情境
+            </span>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mt-1.5 font-display">
+            為什麼要學體積？走入四年級的生活世界
+          </h1>
+          <p class="text-slate-600 mt-2 leading-relaxed">
+            我們在三年級學過長方形「面積」（鋪地磚、貼色紙），那為什麼到了四年級，我們需要認識「體積」呢？一起來看看三個身邊真實發生的問題！
+          </p>
+        </div>
+
+        <!-- 3 Real-Life Context Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Context 1 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-indigo-300 transition-colors">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-boxes-packing"></i>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mb-2">情境一：超商物流裝箱任務</h2>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                網購了一整盒色鉛筆和文具，如果只看紙箱底部的長與寬（面積），面積明明夠大，但如果高度太矮，紙箱就蓋不起來！
+                這告訴我們：<strong class="text-indigo-600">只有長寬不夠，必須加上「高度」，才能真正裝下東西！</strong>
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-amber-700">
+              關鍵觀念：立體空間佔據
+            </div>
+          </div>
+
+          <!-- Context 2 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-indigo-300 transition-colors">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-bowl-food"></i>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mb-2">情境二：便當盒與保溫瓶容量</h2>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                班上小明的便當盒跟小華的便當盒，蓋子長寬完全一樣，但為什麼小明裝的飯菜多了一倍？
+                因為小明的便當盒更深（高度更大）！<strong class="text-emerald-700">厚度與深度越大，能裝下的體積就越多。</strong>
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-emerald-700">
+              關鍵觀念：厚度與空間容量
+            </div>
+          </div>
+
+          <!-- Context 3 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-indigo-300 transition-colors">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-cubes"></i>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mb-2">情境三：麥塊 (Minecraft) 蓋基地</h2>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                在蓋兩層樓的木屋時，如果你想要站在二樓地板上，一樓底下一定要有木樁或石磚頂著！
+                我們在看立體圖時，<strong class="text-indigo-700">二樓積木底下一定要有一樓的積木撐著，絕不能只數看得見的面！</strong>
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-indigo-700">
+              關鍵觀念：重力支撐與隱藏方塊
+            </div>
+          </div>
+        </div>
+
+        <!-- Pre-concept Quick Interactive Check: 面積 vs. 體積 -->
+        <div class="bg-white rounded-2xl p-6 lg:p-8 border border-slate-200 shadow-xs">
+          <h2 class="text-xl font-bold text-slate-900 mb-2 font-display flex items-center gap-2">
+            <i class="fa-solid fa-circle-question text-indigo-600"></i>
+            前導概念快問：分得清楚「面積」與「體積」嗎？
+          </h2>
+          <p class="text-xs text-slate-500 mb-6">點擊選項，立刻檢驗你的直覺判斷！</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Question A -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="text-sm font-bold text-slate-800 mb-2">問題 1：在教室地板鋪滿防滑巧拼地墊</div>
+              <p class="text-xs text-slate-500 mb-3">這是在量測教室地板的什麼呢？</p>
+              <div class="flex gap-2">
+                <button onclick="checkConceptQ(1, 'area')" id="q1-area" class="flex-1 py-2 px-3 bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 border border-slate-200 rounded-lg text-xs font-semibold transition-colors">
+                  平面的「面積」（cm²）
+                </button>
+                <button onclick="checkConceptQ(1, 'volume')" id="q1-vol" class="flex-1 py-2 px-3 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 rounded-lg text-xs font-semibold transition-colors">
+                  立體的「體積」（cm³）
+                </button>
+              </div>
+              <div id="q1-feedback" class="text-xs mt-2.5 hidden"></div>
+            </div>
+
+            <!-- Question B -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="text-sm font-bold text-slate-800 mb-2">問題 2：把一瓶瓶鮮奶整齊排進紙箱裝箱</div>
+              <p class="text-xs text-slate-500 mb-3">紙箱能裝多少罐鮮奶，是取決於紙箱的？</p>
+              <div class="flex gap-2">
+                <button onclick="checkConceptQ(2, 'area')" id="q2-area" class="flex-1 py-2 px-3 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 rounded-lg text-xs font-semibold transition-colors">
+                  平面的「面積」（cm²）
+                </button>
+                <button onclick="checkConceptQ(2, 'volume')" id="q2-vol" class="flex-1 py-2 px-3 bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 border border-slate-200 rounded-lg text-xs font-semibold transition-colors">
+                  立體的「體積」（cm³）
+                </button>
+              </div>
+              <div id="q2-feedback" class="text-xs mt-2.5 hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Next Step CTA to 體積概念大解密 -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-indigo-50/80 border border-indigo-200/80 rounded-2xl">
+          <div>
+            <div class="text-sm font-bold text-indigo-950">了解完三大生活情境與面積/體積差別後...</div>
+            <div class="text-xs text-indigo-700 mt-0.5">準備好深入學習了嗎？一起進入「體積概念大解密」，認識 1 cm³ 與三大經典題型！</div>
+          </div>
+          <button onclick="switchTab('concept')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 whitespace-nowrap">
+            <span>下一步：體積概念大解密</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: 體積概念大解密 (Concept Teaching & 3 Classic Examples) -->
+    <div id="section-concept" class="view-section hidden">
+      <div class="max-w-5xl mx-auto space-y-8">
+        <!-- Section Header -->
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-indigo-600 uppercase">
+            <span class="px-2.5 py-1 bg-indigo-50 border border-indigo-200/60 rounded-md text-indigo-700 font-bold">
+              體積核心概念大解密
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="text-slate-600">從二維面積到三維空間，建立扎實幾何思維</span>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mt-1.5 font-display">
+            體積的本質是什麼？三大經典例子由淺入深全解析
+          </h1>
+          <p class="text-slate-600 mt-2 leading-relaxed">
+            學會體積，就像戴上一副「空間透視眼鏡」，看懂生活中的物品到底佔了多少空間。讓我們從基本定義開始，一步步破解三個經典題型！
+          </p>
+        </div>
+
+        <!-- 1. 核心定義基礎卡 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- 定義 1: 什麼是體積 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mb-3">
+                <i class="fa-solid fa-shapes"></i>
+              </div>
+              <h2 class="text-base font-bold text-slate-900 mb-2">1. 什麼是「體積」（Volume）？</h2>
+              <div class="text-xs text-slate-600 leading-relaxed space-y-2">
+                <p>• <strong>平面的「面積」（二維 2D）</strong>：一張圖畫紙、黑板或地板，只有<strong>長</strong>與<strong>寬</strong>，量測的是平鋪所涵蓋的平面大小（單位：cm² 平方公分）。</p>
+                <p>• <strong>立體的「體積」（三維 3D）</strong>：任何真實物體除了長與寬，還有<strong>「高（厚度或深度）」</strong>。物體在<strong>三維空間中所佔據的位置大小</strong>，就叫做「體積」（單位：cm³ 立方公分）。</p>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-indigo-700">
+              <i class="fa-solid fa-arrow-trend-up"></i>
+              <span>關鍵跨越：從「平面鋪地磚」到「立體堆疊方塊」！</span>
+            </div>
+          </div>
+
+          <!-- 定義 2: 1 立方公分是什麼 -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg mb-3">
+                <i class="fa-solid fa-cube"></i>
+              </div>
+              <h2 class="text-base font-bold text-slate-900 mb-2">2. 什麼是「1 立方公分（1 cm³）」？</h2>
+              <div class="text-xs text-slate-600 leading-relaxed space-y-2">
+                <p>• <strong>度量標準單位</strong>：就像我們用 1 公分的尺量長度、用 1 cm² 色紙量面積，體積也有最公正的基本度量單位！</p>
+                <p>• 邊長為 <strong>1 公分（1 cm）</strong>的正方體積木，它所佔據的立體空間大小，就規定為 <strong>1 立方公分</strong>，英文記作 <strong>1 cm³</strong>。</p>
+                <p>• <strong>計算體積的祕訣</strong>：算出一個形體的體積，就是去數它等於「<strong>幾個 1 cm³ 的正方體積木組合而成</strong>」。</p>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-amber-700">
+              <i class="fa-solid fa-scale-balanced"></i>
+              <span>1 個積木 = 1 cm³ 體積，數積木顆數就是在算體積！</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 三個經典例子（由淺入深階梯式解析） -->
+        <div class="space-y-6">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+            <h2 class="text-lg lg:text-xl font-bold text-slate-900 font-display">三大經典題型解析（由簡單到難）</h2>
+          </div>
+
+          <!-- 例子 1: 簡單入門 (長方體規整鋪排) -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200">
+                  例題一 · 簡單入門（規整鋪排法）
+                </span>
+                <h3 class="text-base font-bold text-slate-900">長方體柱：長 4 cm、寬 2 cm、高 3 cm</h3>
+              </div>
+              <span class="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                總體積 = 24 cm³
+              </span>
+            </div>
+
+                        <!-- 課本圖片範例卡片：長方體柱 -->
+            <div class="bg-gradient-to-b from-slate-50 via-white to-amber-50/20 rounded-2xl p-5 border-2 border-slate-200/90 shadow-xs">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 bg-emerald-100/80 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-300">
+                    <i class="fa-solid fa-book-open"></i> 國小課本插圖
+                  </span>
+                  <span class="text-sm font-bold text-slate-800">
+                    長方體 1 cm³ 正方體積木堆疊圖
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200 font-mono">
+                    1 個積木 ＝ 1 cm³
+                  </span>
+                  <button onclick="loadAndInspectConcept(1)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+                    <i class="fa-solid fa-cube text-emerald-600"></i> 在 3D 實驗室旋轉操作
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <!-- SVG Static Illustration -->
+                <div class="lg:col-span-7 flex justify-center py-2 bg-white rounded-xl border border-slate-200/70 p-3 shadow-inner">
+<svg viewBox="0 0 370 280" class="w-full max-w-[380px] h-auto drop-shadow-sm select-none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="175" cy="235" rx="110" ry="20" fill="rgba(203, 213, 225, 0.65)" />
+  <polygon points="114,162 140,177 140,205 114,190" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,177 166,162 166,190 140,205" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,147 166,162 140,177 114,162" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,177 166,192 166,220 140,205" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,192 192,177 192,205 166,220" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,162 192,177 166,192 140,177" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="88,177 114,192 114,220 88,205" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,192 140,177 140,205 114,220" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,162 140,177 114,192 88,177" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,134 140,149 140,177 114,162" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,149 166,134 166,162 140,177" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,119 166,134 140,149 114,134" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,192 192,207 192,235 166,220" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,207 218,192 218,220 192,235" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,177 218,192 192,207 166,192" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,192 140,207 140,235 114,220" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,207 166,192 166,220 140,235" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,177 166,192 140,207 114,192" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,149 166,164 166,192 140,177" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,164 192,149 192,177 166,192" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,134 192,149 166,164 140,149" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="88,149 114,164 114,192 88,177" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,164 140,149 140,177 114,192" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,134 140,149 114,164 88,149" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,106 140,121 140,149 114,134" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,121 166,106 166,134 140,149" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,91 166,106 140,121 114,106" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,207 218,222 218,250 192,235" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="218,222 244,207 244,235 218,250" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="218,192 244,207 218,222 192,207" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,207 166,222 166,250 140,235" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,222 192,207 192,235 166,250" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,192 192,207 166,222 140,207" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,164 192,179 192,207 166,192" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,179 218,164 218,192 192,207" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,149 218,164 192,179 166,164" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,164 140,179 140,207 114,192" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,179 166,164 166,192 140,207" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,149 166,164 140,179 114,164" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,121 166,136 166,164 140,149" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,136 192,121 192,149 166,164" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,106 192,121 166,136 140,121" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="88,121 114,136 114,164 88,149" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,136 140,121 140,149 114,164" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,106 140,121 114,136 88,121" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,222 192,237 192,265 166,250" fill="#FACC15" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,237 218,222 218,250 192,265" fill="#EAB308" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,207 218,222 192,237 166,222" fill="#FEF08A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,179 218,194 218,222 192,207" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="218,194 244,179 244,207 218,222" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="218,164 244,179 218,194 192,179" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,179 166,194 166,222 140,207" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,194 192,179 192,207 166,222" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,164 192,179 166,194 140,179" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,136 192,151 192,179 166,164" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,151 218,136 218,164 192,179" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,121 218,136 192,151 166,136" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="114,136 140,151 140,179 114,164" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,151 166,136 166,164 140,179" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,121 166,136 140,151 114,136" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,194 192,209 192,237 166,222" fill="#38BDF8" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,209 218,194 218,222 192,237" fill="#0284C7" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,179 218,194 192,209 166,194" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,151 218,166 218,194 192,179" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="218,166 244,151 244,179 218,194" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="218,136 244,151 218,166 192,151" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="140,151 166,166 166,194 140,179" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,166 192,151 192,179 166,194" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,136 192,151 166,166 140,151" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="166,166 192,181 192,209 166,194" fill="#4ADE80" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,181 218,166 218,194 192,209" fill="#16A34A" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <polygon points="192,151 218,166 192,181 166,166" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.3" stroke-linejoin="round"   />
+  <line x1="88" y1="210" x2="192" y2="270" stroke="#D97706" stroke-width="2" stroke-dasharray="3,3" />
+  <text x="110" y="255" fill="#B45309" font-size="12" font-weight="bold" font-family="sans-serif">長 4 cm (4顆)</text>
+  <line x1="196" y1="272" x2="248" y2="242" stroke="#0284C7" stroke-width="2" />
+  <text x="226" y="270" fill="#0369A1" font-size="11" font-weight="bold" font-family="sans-serif">寬 2 cm (2排)</text>
+  <line x1="256" y1="240" x2="256" y2="156" stroke="#16A34A" stroke-width="2" />
+  <text x="264" y="200" fill="#15803D" font-size="11" font-weight="bold" font-family="sans-serif">高 3 cm (3層)</text>
+  <rect x="15" y="105" width="82" height="22" rx="4" fill="#DCFCE7" stroke="#16A34A" stroke-width="1" />
+  <text x="22" y="120" fill="#15803D" font-size="10" font-weight="bold" font-family="sans-serif">第3層: 8顆</text>
+  <rect x="15" y="135" width="82" height="22" rx="4" fill="#E0F2FE" stroke="#0284C7" stroke-width="1" />
+  <text x="22" y="150" fill="#0369A1" font-size="10" font-weight="bold" font-family="sans-serif">第2層: 8顆</text>
+  <rect x="15" y="165" width="82" height="22" rx="4" fill="#FEF9C3" stroke="#EAB308" stroke-width="1" />
+  <text x="22" y="180" fill="#854D0E" font-size="10" font-weight="bold" font-family="sans-serif">第1層: 8顆</text>
+</svg>
+                </div>
+
+                <!-- Structured Dimension Analysis -->
+                <div class="lg:col-span-5 flex flex-col gap-3 text-xs">
+                  <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="text-emerald-700 font-bold flex items-center gap-1.5">
+                      <i class="fa-solid fa-layer-group text-emerald-600"></i> 課本分層拆解法：
+                    </span>
+                    <ul class="mt-2 space-y-1.5 text-slate-700">
+                      <li class="flex items-center justify-between bg-emerald-50/60 px-2 py-1 rounded">
+                        <span>• <strong>第 3 層 (頂層)</strong></span>
+                        <span class="font-mono font-bold text-emerald-700">4 × 2 = 8 顆 (8 cm³)</span>
+                      </li>
+                      <li class="flex items-center justify-between bg-sky-50/60 px-2 py-1 rounded">
+                        <span>• <strong>第 2 層 (中層)</strong></span>
+                        <span class="font-mono font-bold text-sky-700">4 × 2 = 8 顆 (8 cm³)</span>
+                      </li>
+                      <li class="flex items-center justify-between bg-amber-50/60 px-2 py-1 rounded">
+                        <span>• <strong>第 1 層 (底層)</strong></span>
+                        <span class="font-mono font-bold text-amber-700">4 × 2 = 8 顆 (8 cm³)</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="p-3.5 bg-emerald-50 rounded-xl border border-emerald-300 text-emerald-900">
+                    <div class="font-bold text-emerald-950 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-calculator text-emerald-600"></i> 總算式計算：
+                    </div>
+                    <div class="font-mono text-sm font-bold text-emerald-700">
+                      每層 8 顆 × 疊 3 層 ＝ 24 顆
+                    </div>
+                    <div class="text-xs text-emerald-800 mt-1">
+                      因為 1 顆 ＝ 1 cm³，所以體積是 <strong>24 cm³</strong>！
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold">1</span>
+                  Step 1：先鋪底層地磚
+                </div>
+                <p class="leading-relaxed">
+                  看最下面第 1 層：長排 4 顆，寬排 2 顆，一排 4 顆共排 2 排。<br>
+                  <strong class="text-indigo-600 font-mono text-sm">4 × 2 = 8 顆</strong>（就像二維面積鋪了 8 平方公分）。
+                </p>
+              </div>
+
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold">2</span>
+                  Step 2：向上堆疊樓層
+                </div>
+                <p class="leading-relaxed">
+                  高度是 3 cm，表示這個長方體是由同樣大小的 8 顆積木，向上整齊疊了 <strong>3 層樓高</strong>！
+                </p>
+              </div>
+
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold">3</span>
+                  Step 3：總算式總結
+                </div>
+                <p class="leading-relaxed">
+                  一層 8 顆，共有 3 層：<br>
+                  <strong class="text-emerald-600 font-mono text-sm">8 × 3 = 24 顆</strong><br>
+                  總體積為 <strong class="text-emerald-700 font-mono text-sm">24 cm³</strong>！
+                </p>
+              </div>
+            </div>
+
+            <div class="p-3 bg-emerald-50/70 border border-emerald-200/60 rounded-xl text-xs text-emerald-900 flex items-center gap-2">
+              <i class="fa-solid fa-lightbulb text-emerald-600"></i>
+              <span><strong>四年級核心公式口訣</strong>：長方體體積 ＝ 長 × 寬 × 高（一層的數量 × 疊幾層高）！</span>
+            </div>
+          </div>
+
+          <!-- 例子 2: 中等進階 (階梯型與隱藏積木) -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg border border-amber-200">
+                  例題二 · 中等階梯（核心迷思突破）
+                </span>
+                <h3 class="text-base font-bold text-slate-900">階梯型複合積木：底層 3×2，二樓在左側 2×2</h3>
+              </div>
+              <span class="text-xs font-mono font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+                總體積 = 10 cm³
+              </span>
+            </div>
+
+                        <!-- 課本圖片範例卡片：階梯型與隱藏積木 -->
+            <div class="bg-gradient-to-b from-slate-50 via-white to-amber-50/20 rounded-2xl p-5 border-2 border-slate-200/90 shadow-xs">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 bg-amber-100/80 text-amber-800 text-xs font-bold rounded-lg border border-amber-300">
+                    <i class="fa-solid fa-book-open"></i> 國小課本插圖
+                  </span>
+                  <span class="text-sm font-bold text-slate-800">
+                    階梯型複合積木（隱藏地基透視圖解）
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200 font-mono">
+                    1 個積木 ＝ 1 cm³
+                  </span>
+                  <button onclick="loadAndInspectConcept(2)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg border border-amber-200 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+                    <i class="fa-solid fa-cube text-amber-600"></i> 在 3D 實驗室旋轉操作
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <!-- SVG Static Illustration -->
+                <div class="lg:col-span-7 flex justify-center py-2 bg-white rounded-xl border border-slate-200/70 p-3 shadow-inner">
+<svg viewBox="0 0 390 265" class="w-full max-w-[380px] h-auto drop-shadow-sm select-none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="175" cy="230" rx="110" ry="18" fill="rgba(203, 213, 225, 0.65)" />
+  <polygon points="132,151 160,167 160,197 132,181" fill="#FDA4AF" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="160,167 188,151 188,181 160,197" fill="#F43F5E" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="160,135 188,151 160,167 132,151" fill="#FFE4E6" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="160,167 188,183 188,213 160,197" fill="#FDA4AF" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="188,183 216,167 216,197 188,213" fill="#F43F5E" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="188,151 216,167 188,183 160,167" fill="#FFE4E6" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="104,167 132,183 132,213 104,197" fill="#FDA4AF" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="132,183 160,167 160,197 132,213" fill="#F43F5E" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="132,151 160,167 132,183 104,167" fill="#FFE4E6" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="132,121 160,137 160,167 132,151" fill="#38BDF8" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,137 188,121 188,151 160,167" fill="#0284C7" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,105 188,121 160,137 132,121" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="132,183 160,199 160,229 132,213" fill="#FDA4AF" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="160,199 188,183 188,213 160,229" fill="#F43F5E" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="160,167 188,183 160,199 132,183" fill="#FFE4E6" stroke="#BE123C" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="3,3"  />
+  <polygon points="188,183 216,199 216,229 188,213" fill="#FACC15" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="216,199 244,183 244,213 216,229" fill="#EAB308" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="216,167 244,183 216,199 188,183" fill="#FEF08A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,137 188,153 188,183 160,167" fill="#38BDF8" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="188,153 216,137 216,167 188,183" fill="#0284C7" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="188,121 216,137 188,153 160,137" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="104,137 132,153 132,183 104,167" fill="#38BDF8" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="132,153 160,137 160,167 132,183" fill="#0284C7" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="132,121 160,137 132,153 104,137" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,199 188,215 188,245 160,229" fill="#FACC15" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="188,215 216,199 216,229 188,245" fill="#EAB308" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="188,183 216,199 188,215 160,199" fill="#FEF08A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="132,153 160,169 160,199 132,183" fill="#38BDF8" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,169 188,153 188,183 160,199" fill="#0284C7" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,137 188,153 160,169 132,153" fill="#BAE6FD" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <rect x="15" y="45" width="105" height="24" rx="5" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.2" />
+  <text x="23" y="61" fill="#0369A1" font-size="11" font-weight="bold" font-family="sans-serif">二樓頂層: 4 顆</text>
+  <line x1="125" y1="180" x2="60" y2="230" stroke="#BE123C" stroke-width="1.6" />
+  <rect x="25" y="220" width="165" height="26" rx="5" fill="#FFE4E6" stroke="#BE123C" stroke-width="1.2" />
+  <text x="32" y="237" fill="#9F1239" font-size="11" font-weight="bold" font-family="sans-serif">🚨 隱藏地基積木 (4 顆)</text>
+  <line x1="225" y1="175" x2="270" y2="200" stroke="#B45309" stroke-width="1.5" />
+  <rect x="250" y="195" width="120" height="24" rx="5" fill="#FEF9C3" stroke="#B45309" stroke-width="1.2" />
+  <text x="258" y="211" fill="#854D0E" font-size="11" font-weight="bold" font-family="sans-serif">底層露出: 2 顆</text>
+</svg>
+                </div>
+
+                <!-- Structured Misconception Breaker Box -->
+                <div class="lg:col-span-5 flex flex-col gap-3 text-xs">
+                  <div class="p-3.5 bg-rose-50 rounded-xl border border-rose-200 text-rose-900">
+                    <div class="font-bold text-rose-700 flex items-center gap-1.5 mb-1.5">
+                      <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> 破解「只看表面」迷思：
+                    </div>
+                    <p class="leading-relaxed text-xs text-rose-800">
+                      只數表面容易誤答 6 顆。但<strong>二樓不會浮在半空中</strong>！要撐住二樓的 4 顆積木，一樓底下必定有 <strong class="text-rose-900 underline">4 顆隱藏地基積木</strong> 穩穩頂著！
+                    </p>
+                  </div>
+                  <div class="p-3.5 bg-amber-50 rounded-xl border border-amber-300 text-amber-900">
+                    <div class="font-bold text-amber-950 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-layer-group text-amber-600"></i> 課本分層計算算式：
+                    </div>
+                    <div class="space-y-1 font-mono text-xs">
+                      <div>• 第 2 層 (頂層)：2 × 2 = <strong class="text-sky-700">4 顆</strong></div>
+                      <div>• 第 1 層 (底層)：3 × 2 = <strong class="text-amber-700">6 顆</strong>（含 4 顆地基）</div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-amber-200 text-xs font-bold text-amber-950">
+                      總計：4 + 6 = <span class="font-mono text-sm text-amber-700">10 顆 (10 cm³)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 迷思警告框 -->
+            <div class="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 flex items-start gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+              <div>
+                <strong>🚨 國小學生最常犯的典型錯誤：只數表面看得到的方塊！</strong><br>
+                從正面看以為只有 6 顆，從上面看也只看到 6 個面，就衝動回答 6 顆！但仔細想想，二樓能飄在空中嗎？
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold">1</span>
+                  Step 1：先算最頂樓（第 2 層）
+                </div>
+                <p class="leading-relaxed">
+                  二樓很清楚，是 2×2 的小平台：<br>
+                  <strong class="text-indigo-600 font-mono">2 × 2 = 4 顆</strong>。
+                </p>
+              </div>
+
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold">2</span>
+                  Step 2：重力支撐地基探問
+                </div>
+                <p class="leading-relaxed">
+                  要撐住二樓的 4 顆積木，一樓底下必定有 <strong>4 顆隱藏積木</strong> 頂著它！底層原本有鋪滿 3×2 = 6 顆，露出來的只有 2 顆，被壓住的有 4 顆！
+                </p>
+              </div>
+
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-bold">3</span>
+                  Step 3：分層相加法
+                </div>
+                <p class="leading-relaxed">
+                  一層一層分開算：<br>
+                  • 第 2 層：4 顆<br>
+                  • 第 1 層：6 顆（含隱藏積木）<br>
+                  <strong class="text-amber-600 font-mono text-sm">6 + 4 = 10 顆</strong>（體積 <strong>10 cm³</strong>）
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 例子 3: 進階高階 (中空回字形與多元策略) -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-lg border border-purple-200">
+                  例題三 · 進階高階（多元空間解題策略）
+                </span>
+                <h3 class="text-base font-bold text-slate-900">中空回字形複合形體：底層 3×3 挖空中間，二樓四角各 1 顆</h3>
+              </div>
+              <span class="text-xs font-mono font-bold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200">
+                總體積 = 12 cm³
+              </span>
+            </div>
+
+                        <!-- 課本圖片範例卡片：中空回字形結構 -->
+            <div class="bg-gradient-to-b from-slate-50 via-white to-purple-50/20 rounded-2xl p-5 border-2 border-slate-200/90 shadow-xs">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 bg-purple-100/80 text-purple-800 text-xs font-bold rounded-lg border border-purple-300">
+                    <i class="fa-solid fa-book-open"></i> 國小課本插圖
+                  </span>
+                  <span class="text-sm font-bold text-slate-800">
+                    中空回字形複合形體（天井穿透圖解）
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200 font-mono">
+                    1 個積木 ＝ 1 cm³
+                  </span>
+                  <button onclick="loadAndInspectConcept(3)" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg border border-purple-200 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+                    <i class="fa-solid fa-cube text-purple-600"></i> 在 3D 實驗室旋轉操作
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <!-- SVG Static Illustration -->
+                <div class="lg:col-span-7 flex justify-center py-2 bg-white rounded-xl border border-slate-200/70 p-3 shadow-inner">
+<svg viewBox="0 0 390 265" class="w-full max-w-[380px] h-auto drop-shadow-sm select-none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="160" cy="235" rx="115" ry="18" fill="rgba(203, 213, 225, 0.65)" />
+  <polygon points="134,142 160,157 160,185 134,170" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,157 186,142 186,170 160,185" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,127 186,142 160,157 134,142" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,157 186,172 186,200 160,185" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="186,172 212,157 212,185 186,200" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="186,142 212,157 186,172 160,157" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="108,157 134,172 134,200 108,185" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,172 160,157 160,185 134,200" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,142 160,157 134,172 108,157" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,114 160,129 160,157 134,142" fill="#A78BFA" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,129 186,114 186,142 160,157" fill="#7C3AED" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,99 186,114 160,129 134,114" fill="#DDD6FE" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="186,172 212,187 212,215 186,200" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="212,187 238,172 238,200 212,215" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="212,157 238,172 212,187 186,172" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="82,172 108,187 108,215 82,200" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="108,187 134,172 134,200 108,215" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="108,157 134,172 108,187 82,172" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,187 186,202 186,230 160,215" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="186,202 212,187 212,215 186,230" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="186,172 212,187 186,202 160,187" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="108,187 134,202 134,230 108,215" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,202 160,187 160,215 134,230" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,172 160,187 134,202 108,187" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="186,144 212,159 212,187 186,172" fill="#A78BFA" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="212,159 238,144 238,172 212,187" fill="#7C3AED" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="212,129 238,144 212,159 186,144" fill="#DDD6FE" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="82,144 108,159 108,187 82,172" fill="#A78BFA" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="108,159 134,144 134,172 108,187" fill="#7C3AED" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="108,129 134,144 108,159 82,144" fill="#DDD6FE" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,202 160,217 160,245 134,230" fill="#4ADE80" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,217 186,202 186,230 160,245" fill="#16A34A" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,187 186,202 160,217 134,202" fill="#BBF7D0" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="134,174 160,189 160,217 134,202" fill="#A78BFA" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,189 186,174 186,202 160,217" fill="#7C3AED" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,159 186,174 160,189 134,174" fill="#DDD6FE" stroke="#1E293B" stroke-width="1.4" stroke-linejoin="round"   />
+  <polygon points="160,165 186,180 160,195 134,180" fill="#F1F5F9" stroke="#64748B" stroke-dasharray="3,3" stroke-width="1.5" />
+  <text x="142" y="184" fill="#475569" font-size="10" font-weight="bold" font-family="sans-serif">中空 0</text>
+  <rect x="15" y="40" width="125" height="24" rx="5" fill="#F3E8FF" stroke="#7C3AED" stroke-width="1.2" />
+  <text x="22" y="56" fill="#6B21A8" font-size="11" font-weight="bold" font-family="sans-serif">二樓四角柱: 4 顆</text>
+  <line x1="160" y1="190" x2="220" y2="230" stroke="#475569" stroke-width="1.5" />
+  <rect x="200" y="220" width="145" height="26" rx="5" fill="#F8FAFC" stroke="#64748B" stroke-width="1.2" />
+  <text x="208" y="237" fill="#334155" font-size="11" font-weight="bold" font-family="sans-serif">天井中空穿透 (0 顆)</text>
+</svg>
+                </div>
+
+                <!-- Structured Strategy Breakdown Box -->
+                <div class="lg:col-span-5 flex flex-col gap-3 text-xs">
+                  <div class="p-3.5 bg-indigo-50 rounded-xl border border-indigo-200 text-indigo-900">
+                    <div class="font-bold text-indigo-950 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-puzzle-piece text-indigo-600"></i> 策略一 · 分層相加法：
+                    </div>
+                    <div class="text-xs text-slate-700 space-y-1">
+                      <div>• <strong>第 1 層 (底層)</strong>：3×3 扣除中空 1 顆 ＝ <strong class="text-emerald-700 font-mono">8 顆</strong></div>
+                      <div>• <strong>第 2 層 (頂層)</strong>：四個角柱 ＝ <strong class="text-purple-700 font-mono">4 顆</strong></div>
+                      <div class="text-indigo-800 font-mono font-bold mt-1">8 + 4 ＝ 12 顆 (12 cm³)</div>
+                    </div>
+                  </div>
+                  <div class="p-3.5 bg-purple-50 rounded-xl border border-purple-200 text-purple-900">
+                    <div class="font-bold text-purple-950 mb-1 flex items-center gap-1.5">
+                      <i class="fa-solid fa-box-open text-purple-600"></i> 策略二 · 填補扣除法：
+                    </div>
+                    <div class="text-xs text-slate-700 space-y-1">
+                      <div>• 完整外框大盒子：3 × 3 × 2 ＝ <strong class="font-mono">18 顆</strong></div>
+                      <div>• 扣除空缺：二樓中間 5 顆 ＋ 一樓中空 1 顆 ＝ <strong class="font-mono">6 顆</strong></div>
+                      <div class="text-purple-800 font-mono font-bold mt-1">18 - 6 ＝ 12 顆 (12 cm³)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <!-- 策略 A -->
+              <div class="p-4 bg-indigo-50/50 rounded-xl border border-indigo-200/60">
+                <div class="font-bold text-indigo-950 mb-2 flex items-center gap-2">
+                  <i class="fa-solid fa-puzzle-piece text-indigo-600"></i>
+                  <span>策略 A：分層拆解相加法（直觀法）</span>
+                </div>
+                <div class="space-y-1.5 text-slate-600 leading-relaxed">
+                  <p>• <strong>第 1 層（底層）</strong>：如果鋪滿原本是 3×3 = 9 顆，但正中心是中空天井（扣除 1 顆），所以第 1 層有：<br>
+                  <span class="font-mono font-bold text-indigo-700">9 - 1 = 8 顆</span></p>
+                  <p>• <strong>第 2 層（二樓）</strong>：四個角落各有 1 顆支柱，共：<br>
+                  <span class="font-mono font-bold text-indigo-700">1 × 4 = 4 顆</span></p>
+                  <p>• <strong>兩層相加</strong>：<span class="font-mono font-bold text-indigo-700 text-sm">8 + 4 = 12 顆（體積 12 cm³）</span></p>
+                </div>
+              </div>
+
+              <!-- 策略 B -->
+              <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-200/60">
+                <div class="font-bold text-purple-950 mb-2 flex items-center gap-2">
+                  <i class="fa-solid fa-box-open text-purple-600"></i>
+                  <span>策略 B：整體包覆扣除法（容積減法）</span>
+                </div>
+                <div class="space-y-1.5 text-slate-600 leading-relaxed">
+                  <p>• <strong>假裝填滿大盒子</strong>：用一個長 3、寬 3、高 2 的大實心長方體把整個形體包住，大盒子體積是：<br>
+                  <span class="font-mono font-bold text-purple-700">3 × 3 × 2 = 18 顆</span></p>
+                  <p>• <strong>扣除多算的中空部分</strong>：<br>
+                  二樓中間沒放 5 顆，一樓中心天井是空的 1 顆，共少了 5 + 1 = 6 顆。</p>
+                  <p>• <strong>減法計算</strong>：<span class="font-mono font-bold text-purple-700 text-sm">18 - 6 = 12 顆（體積 12 cm³）</span></p>
+                </div>
+              </div>
+            </div>
+            <div class="text-xs text-slate-500 text-center font-medium">
+              💡 兩種方法算出來答案完全一樣！這就是數學空間幾何最迷人的地方！
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 下一步行動呼籲卡 -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-2xl shadow-md">
+          <div>
+            <div class="text-base font-bold font-display">掌握了三個經典概念，現在換你動手試試看！</div>
+            <div class="text-xs text-indigo-200 mt-1">你可以先到「自由積木實驗室」堆疊自己的城堡，或直接前往「體積挑戰館」闖關！</div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <button onclick="switchTab('sandbox')" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-colors border border-white/20">
+              <i class="fa-solid fa-cubes-stacked mr-1"></i> 前往自由實驗室
+            </button>
+            <button onclick="switchTab('arena')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5">
+              <span>前往體積挑戰館</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- SECTION 4: 學習歷程追蹤與 AI 自學小幫手 (Dashboard) -->
+    <div id="section-dashboard" class="view-section hidden">
+      <div class="max-w-5xl mx-auto space-y-8">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-indigo-600 uppercase">
+            <span class="px-2.5 py-1 bg-indigo-50 border border-indigo-200/60 rounded-md text-indigo-700 font-bold">
+              學習證據儀表板
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="text-slate-600">Evidence of Learning & AI Prompt</span>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 mt-1.5 font-display">
+            個人學習歷程報告與 AI 專屬家教
+          </h1>
+        </div>
+
+        <!-- 4 Key Diagnostic Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500 font-medium">答題正確率</div>
+            <div id="dash-accuracy" class="text-2xl lg:text-3xl font-bold font-mono text-slate-900 mt-1">100%</div>
+            <div id="dash-total-q" class="text-xs text-slate-500 mt-1">累計答對 1 / 1 題</div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500 font-medium">3D 旋轉觀察次數</div>
+            <div id="dash-rotation" class="text-2xl lg:text-3xl font-bold font-mono text-indigo-600 mt-1">0 次</div>
+            <div class="text-xs text-slate-500 mt-1">主動空間探索指標</div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500 font-medium">分層拉桿使用次數</div>
+            <div id="dash-layer-slider" class="text-2xl lg:text-3xl font-bold font-mono text-cyan-600 mt-1">0 次</div>
+            <div class="text-xs text-slate-500 mt-1">剖析結構思維指標</div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="text-xs text-slate-500 font-medium">隱藏積木迷思觸發</div>
+            <div id="dash-misconception" class="text-2xl lg:text-3xl font-bold font-mono text-amber-600 mt-1">0 次</div>
+            <div class="text-xs text-slate-500 mt-1">表面只數盲點偵測</div>
+          </div>
+        </div>
+
+        <!-- Badges earned -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+          <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-award text-amber-500"></i>
+            成就勳章獎章櫃
+          </h2>
+          <div id="badges-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Badges rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Exit Ticket: 概念檢核題 -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-clipboard-check text-emerald-600"></i>
+              Exit Ticket 概念檢核單（課後 3 題快速自測）
+            </h2>
+            <span id="exit-score" class="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+              得分：0 / 3
+            </span>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Question 1 -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <p class="text-sm font-semibold text-slate-800 mb-2">
+                1. 一個長 3 cm、寬 2 cm、高 2 cm 的長方體，底層鋪了幾顆 $1\text{ cm}^3$ 的正方體？
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="checkExitTicket(1, 6)" class="exit-q1 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">A. 6 顆</button>
+                <button onclick="checkExitTicket(1, 5)" class="exit-q1 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">B. 5 顆</button>
+                <button onclick="checkExitTicket(1, 12)" class="exit-q1 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">C. 12 顆</button>
+              </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <p class="text-sm font-semibold text-slate-800 mb-2">
+                2. 在計算階梯狀積木時，為什麼不能只把從上方和正面看到的方塊加起來？
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="checkExitTicket(2, 'correct')" class="exit-q2 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">A. 因為高樓層底下藏著支撐方塊，會被上方擋住看不見</button>
+                <button onclick="checkExitTicket(2, 'wrong1')" class="exit-q2 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">B. 因為積木會自己縮小</button>
+                <button onclick="checkExitTicket(2, 'wrong2')" class="exit-q2 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">C. 因為只需要算最高的那一層</button>
+              </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <p class="text-sm font-semibold text-slate-800 mb-2">
+                3. 「長方形紙張的大小」和「鉛筆盒能裝多少隻筆」，分別是用什麼單位？
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="checkExitTicket(3, 'correct')" class="exit-q3 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">A. 紙張大小是面積 ($\text{cm}^2$)，鉛筆盒容量是體積 ($\text{cm}^3$)</button>
+                <button onclick="checkExitTicket(3, 'wrong')" class="exit-q3 px-3 py-1.5 bg-white border border-slate-200 text-xs rounded-lg hover:border-indigo-400 font-medium">B. 兩個都是體積 ($\text{cm}^3$)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Self-study Prompt Generator (個人化延伸學習 Prompt) -->
+        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl p-6 lg:p-8 shadow-lg border border-indigo-700/50">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div>
+                <h2 class="text-lg lg:text-xl font-bold font-display">
+                  「AI 自學小幫手」個人化 Prompt 生成器
+                </h2>
+                <p class="text-xs text-indigo-200">
+                  根據你剛剛的作答歷程，專屬生成的家教提示詞。複製後可貼到 ChatGPT / Claude / Gemini 繼續挑戰！
+                </p>
+              </div>
+            </div>
+
+            <button onclick="copyGeneratedPrompt()" id="btn-copy-prompt" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 shrink-0">
+              <i class="fa-solid fa-copy"></i>
+              <span id="copy-btn-text">一鍵複製專屬 Prompt</span>
+            </button>
+          </div>
+
+          <!-- Generated Prompt Box -->
+          <div class="relative">
+            <pre id="ai-prompt-box" class="w-full bg-slate-950/70 p-4 rounded-xl border border-indigo-500/30 text-xs text-indigo-100 font-mono whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto custom-scrollbar select-all"></pre>
+          </div>
+          <div class="mt-3 text-right">
+            <span class="text-[11px] text-indigo-300">
+              提示：支援 <code>navigator.clipboard</code> 與 <code>execCommand</code> 雙重保底機制，即使在 iframe 中也能安心複製！
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- Global Toast / Voice Announcement Overlay -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Audio Context & Script -->
+  <script id="app-logic">
+    // ==========================================
+    // 1. Audio Synthesis System (Web Audio API)
+    // ==========================================
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('audio-icon');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high';
+        showToast('音效已開啟');
+        playChime('click');
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+        showToast('音效已靜音');
+      }
+    }
+
+    function playChime(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        // Wooden pleasant tap
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(580, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } else if (type === 'correct') {
+        // Bright celebratory major chord arpeggio: C5 - E5 - G5 - C6
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.08);
+          gain.gain.setValueAtTime(0, now + i * 0.08);
+          gain.gain.linearRampToValueAtTime(0.22, now + i * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.36);
+        });
+      } else if (type === 'wrong') {
+        // Soft encouraging low marimba thud
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(260, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.22);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.23);
+      } else if (type === 'hint') {
+        // Gentle bell chime
+        const freqs = [659.25, 880.00];
+        freqs.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, now + i * 0.1);
+          gain.gain.setValueAtTime(0.18, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.42);
+        });
+      } else if (type === 'badge') {
+        // Fanfare chord
+        const freqs = [440, 554.37, 659.25, 880];
+        freqs.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.06);
+          gain.gain.setValueAtTime(0.2, now + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.5);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.06);
+          osc.stop(now + i * 0.06 + 0.55);
+        });
+      }
+    }
+
+    // ==========================================
+    // 2. Speech Synthesis (Web Speech API)
+    // ==========================================
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) {
+        showToast('此瀏覽器不支援語音朗讀');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      // Remove LaTeX and markdown symbols for smooth speech
+      const cleanText = text
+        .replace(/\$1\\text\{ cm\}\^3\$/g, '一立方公分')
+        .replace(/\$1\\text\{cm\}\^3\$/g, '一立方公分')
+        .replace(/\$\\text\{cm\}\^3\$/g, '立方公分')
+        .replace(/\$\\text\{cm\}\^2\$/g, '平方公分')
+        .replace(/\$|\*|_|#/g, '')
+        .replace(/cm/g, '公分');
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'zh-TW';
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1; // friendly tone for elementary students
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function readCurrentQuestion() {
+      const q = getCurrentQuestion();
+      if (!q) return;
+      const text = `${q.title}。請在右邊輸入積木總數量，以及立體形體的體積是多少立方公分。`;
+      speakText(text);
+      showToast('🔊 正在朗讀題目...');
+    }
+
+    function readAloudMisconception() {
+      const text = document.getElementById('misconception-text').innerText;
+      speakText(text);
+    }
+
+    // ==========================================
+    // 3. Question Bank & Adaptive Learning Data
+    // ==========================================
+    const QUESTION_BANK = {
+      1: [
+        {
+          id: 'l1_q1',
+          level: 1,
+          category: '基礎實心立方體 (長×寬×高鋪排)',
+          title: '這是一個邊長 2 cm 的實心正方體，由 $1\\text{ cm}^3$ 的小積木組成，請問總體積是多少？',
+          dimensions: '長 2cm × 寬 2cm × 高 2cm',
+          cubes: [
+            // 2x2x2 solid
+            { x: 0, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 1, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 0, y: 0, z: 1, layer: 1, isHidden: false },
+            { x: 1, y: 0, z: 1, layer: 1, isHidden: false },
+            { x: 0, y: 1, z: 0, layer: 2, isHidden: false },
+            { x: 1, y: 1, z: 0, layer: 2, isHidden: false },
+            { x: 0, y: 1, z: 1, layer: 2, isHidden: false },
+            { x: 1, y: 1, z: 1, layer: 2, isHidden: false },
+          ],
+          answerCount: 8,
+          visibleCount: 7, // someone forgets the back-bottom cube
+          misconceptionPrompt: '你是不是只數了轉過來看到的表面方塊？請轉動 3D 模型，看清楚後面和底層是不是也有方塊排滿！',
+          hints: [
+            '【角度觀察】先用滑鼠轉動一下視角！這是一個長 2、寬 2、高 2 的正方體，轉到背面看看是不是都排滿了？',
+            '【重力支撐】二樓有 4 顆積木，一樓底下剛好也有 4 顆積木穩穩托著它！',
+            '【分層列式】拉動「分層拆解拉桿」！頂層有 4 顆，底層有 4 顆，兩層相加：4 + 4 = 8 顆！'
+          ],
+          layerBreakdown: { 1: 4, 2: 4 },
+          solutionHtml: '<strong>完整解析：</strong><br>底層（第 1 層）：2 × 2 = 4 顆<br>頂層（第 2 層）：2 × 2 = 4 顆<br>總數量 = 4 + 4 = <strong>8 顆</strong>，因此體積為 <strong>8 cm³</strong>。'
+        },
+        {
+          id: 'l1_q2',
+          level: 1,
+          category: '長方體分層鋪排 (長3×寬2×高2)',
+          title: '這是一個長 3 cm、寬 2 cm、高 2 cm 的長方體，請問總共需要多少個 $1\\text{ cm}^3$ 的積木？',
+          dimensions: '長 3cm × 寬 2cm × 高 2cm',
+          cubes: (function() {
+            const list = [];
+            for (let y = 0; y < 2; y++) {
+              for (let z = 0; z < 2; z++) {
+                for (let x = 0; x < 3; x++) {
+                  list.push({ x, y, z, layer: y + 1, isHidden: false });
+                }
+              }
+            }
+            return list;
+          })(),
+          answerCount: 12,
+          visibleCount: 9,
+          misconceptionPrompt: '注意！這個長方體有 2 層。如果只算第一層只有 6 顆，但上面還有完整的一層喔！',
+          hints: [
+            '【角度觀察】轉動模型看看長、寬、高各有幾個小格子？長是 3 格、寬是 2 格、高是 2 格。',
+            '【重力支撐】每一層都是整齊鋪平的長方形，第一層有幾顆？第二層就有同樣多的顆數！',
+            '【分層列式】底層有 3 × 2 = 6 顆，頂層也有 3 × 2 = 6 顆。兩層合起來就是 6 + 6 = 12 顆！'
+          ],
+          layerBreakdown: { 1: 6, 2: 6 },
+          solutionHtml: '<strong>完整解析：</strong><br>每一層鋪 3 × 2 = 6 顆積木，共有 2 層高。<br>算式：6 × 2 = <strong>12 顆</strong>，總體積為 <strong>12 cm³</strong>。'
+        }
+      ],
+      2: [
+        {
+          id: 'l2_q1',
+          level: 2,
+          category: '階梯型複合形體 (核心隱藏積木診斷)',
+          title: '這是一座三層階梯型積木。請算出這個立體形體總共佔據了多少體積？',
+          dimensions: '底層 3×2, 第二層 2×2, 頂層 1×2',
+          cubes: [
+            // Layer 1 (y=0): 3x2 = 6 cubes (x: 0,1,2; z: 0,1)
+            // (x=0, z=0,1 is under layer 2 & 3 -> HIDDEN)
+            // (x=1, z=0,1 is under layer 2 -> HIDDEN)
+            { x: 0, y: 0, z: 0, layer: 1, isHidden: true },
+            { x: 0, y: 0, z: 1, layer: 1, isHidden: true },
+            { x: 1, y: 0, z: 0, layer: 1, isHidden: true },
+            { x: 1, y: 0, z: 1, layer: 1, isHidden: true },
+            { x: 2, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 2, y: 0, z: 1, layer: 1, isHidden: false },
+
+            // Layer 2 (y=1): 2x2 = 4 cubes (x: 0,1; z: 0,1)
+            // (x=0, z=0,1 is under layer 3 -> HIDDEN)
+            { x: 0, y: 1, z: 0, layer: 2, isHidden: true },
+            { x: 0, y: 1, z: 1, layer: 2, isHidden: true },
+            { x: 1, y: 1, z: 0, layer: 2, isHidden: false },
+            { x: 1, y: 1, z: 1, layer: 2, isHidden: false },
+
+            // Layer 3 (y=2): 1x2 = 2 cubes (x: 0; z: 0,1)
+            { x: 0, y: 2, z: 0, layer: 3, isHidden: false },
+            { x: 0, y: 2, z: 1, layer: 3, isHidden: false },
+          ],
+          answerCount: 12,
+          visibleCount: 6, // counting only the protruding visible step cubes (2 + 2 + 2 = 6)!
+          misconceptionPrompt: '🚨 抓到了！你是不是只數表面看得到的階梯積木（數成 6 顆）？在真實世界裡，二樓和三樓底下如果沒有一樓積木頂著，早就塌下來了！被壓在底下的隱藏積木也是體積的一部分！',
+          hints: [
+            '【角度觀察】先旋轉 3D 模型！從側面看過去，這是一座 3、2、1 的階梯，但是積木寬度有 2 排喔！',
+            '【關鍵概念與重力支撐】三樓有 2 顆積木，二樓有 4 顆，難道它們會浮在半空中嗎？要撐住三樓與二樓，一樓底下其實整齊鋪滿了 6 顆積木！',
+            '【分層列式拆解】請拉動「分層拆解拉桿」！讓我們一層一層算：第 3 層有 2 顆，第 2 層有 4 顆，第 1 層有 6 顆。加起來是：2 + 4 + 6 = ？'
+          ],
+          layerBreakdown: { 1: 6, 2: 4, 3: 2 },
+          solutionHtml: '<strong>階梯分層拆解全解析：</strong><br>• 第 3 層（最頂層）：1 × 2 = <strong>2 顆</strong><br>• 第 2 層（中間層）：2 × 2 = <strong>4 顆</strong>（其中 2 顆撐住第 3 層）<br>• 第 1 層（最底層）：3 × 2 = <strong>6 顆</strong>（其中 4 顆撐住上層，屬於隱藏積木）<br>總計：2 + 4 + 6 = <strong>12 顆</strong>，總體積為 <strong>12 cm³</strong>。'
+        },
+        {
+          id: 'l2_q2',
+          level: 2,
+          category: '雙層角落平台 (底層遮蔽診斷)',
+          title: '底層排了一個 3×3 的大平台，角落蓋了 2×2 的二樓小閣樓。請問這棟積木建築的體積是多少？',
+          dimensions: '底層 3×3 (9顆), 二樓 2×2 (4顆)',
+          cubes: (function() {
+            const list = [];
+            // Layer 1: 3x3 = 9 cubes
+            for (let z = 0; z < 3; z++) {
+              for (let x = 0; x < 3; x++) {
+                // If x < 2 && z < 2, it is under layer 2 -> hidden!
+                const isUnderL2 = (x < 2 && z < 2);
+                list.push({ x, y: 0, z, layer: 1, isHidden: isUnderL2 });
+              }
+            }
+            // Layer 2: 2x2 = 4 cubes at (0..1, 0..1)
+            for (let z = 0; z < 2; z++) {
+              for (let x = 0; x < 2; x++) {
+                list.push({ x, y: 1, z, layer: 2, isHidden: false });
+              }
+            }
+            return list;
+          })(),
+          answerCount: 13,
+          visibleCount: 9, // student forgets bottom layer has 9 and thinks top replaces it or counts 9
+          misconceptionPrompt: '🚨 關鍵提醒：二樓蓋在角落（4 顆），但底層一樓仍然是完整的 3×3 大平台（9 顆）喔！不要因為二樓蓋上去，就以為一樓被挖空了！',
+          hints: [
+            '【角度觀察】轉到鳥瞰視角看看！二樓佔據了左上角 4 格，但底層一樓延伸出去還有 5 格露在外面。',
+            '【重力支撐】二樓的 4 顆積木正下方，一樓有 4 顆地基積木撐著，加上露出來的 5 顆，底層共有 9 顆！',
+            '【分層列式】用分層拉桿把二樓抬高！頂層有 4 顆，底層有 9 顆，合起來算式：9 + 4 = 13！'
+          ],
+          layerBreakdown: { 1: 9, 2: 4 },
+          solutionHtml: '<strong>完整解析：</strong><br>• 第 2 層：2 × 2 = <strong>4 顆</strong><br>• 第 1 層（地基全滿）：3 × 3 = <strong>9 顆</strong>（其中 4 顆被二樓覆蓋遮蔽）<br>總數：9 + 4 = <strong>13 顆</strong>，體積為 <strong>13 cm³</strong>。'
+        }
+      ],
+      3: [
+        {
+          id: 'l3_q1',
+          level: 3,
+          category: '中空回字形甜甜圈 (空間重組與容積扣除)',
+          title: '這是一個中空的甜甜圈造型積木！中間有一個 1×1 穿透的天井，請問總體積是多少？',
+          dimensions: '3×3 挖空中心 + 上層 4 個頂角',
+          cubes: [
+            // Layer 1: 3x3 hollow center (8 cubes)
+            { x: 0, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 1, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 2, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 0, y: 0, z: 1, layer: 1, isHidden: false },
+            // (1,0,1) is EMPTY!
+            { x: 2, y: 0, z: 1, layer: 1, isHidden: false },
+            { x: 0, y: 0, z: 2, layer: 1, isHidden: false },
+            { x: 1, y: 0, z: 2, layer: 1, isHidden: false },
+            { x: 2, y: 0, z: 2, layer: 1, isHidden: false },
+
+            // Layer 2: 4 corner cubes
+            { x: 0, y: 1, z: 0, layer: 2, isHidden: false },
+            { x: 2, y: 1, z: 0, layer: 2, isHidden: false },
+            { x: 0, y: 1, z: 2, layer: 2, isHidden: false },
+            { x: 2, y: 1, z: 2, layer: 2, isHidden: false },
+          ],
+          answerCount: 12,
+          visibleCount: 8,
+          misconceptionPrompt: '注意！中間是空心的天井，沒有放積木喔！但四個角落各有 2 層高，請不要多算或少算！',
+          hints: [
+            '【角度觀察】從鳥瞰視角看下去，中間是不是能直接看穿到地板？這代表中間那格體積是 0！',
+            '【結構重組】第一層是 3×3 減掉中間 1 格，算算看第一層有幾顆？',
+            '【分層列式】第一層有 9 - 1 = 8 顆；第二層在四個角各有 1 顆，共 4 顆。8 + 4 = 12 顆！'
+          ],
+          layerBreakdown: { 1: 8, 2: 4 },
+          solutionHtml: '<strong>容積扣除法與分層法解析：</strong><br>• 第 1 層：原本 3 × 3 = 9，扣除中間中空格 1 = <strong>8 顆</strong><br>• 第 2 層：四個角落各有 1 顆 = <strong>4 顆</strong><br>總數：8 + 4 = <strong>12 顆</strong>，總體積為 <strong>12 cm³</strong>。'
+        },
+        {
+          id: 'l3_q2',
+          level: 3,
+          category: '雙柱拱門懸樑結構 (複合形體分解)',
+          title: '這座拱門積木左右各有一根柱子，上方架著一座橫樑。請問總共用了多少顆積木？',
+          dimensions: '左右各 2 層柱子 + 上層 4 顆橫樑',
+          cubes: [
+            // Left column: 2 cubes at (0, 0..1, 0)
+            { x: 0, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 0, y: 1, z: 0, layer: 2, isHidden: true },
+            // Right column: 2 cubes at (3, 0..1, 0)
+            { x: 3, y: 0, z: 0, layer: 1, isHidden: false },
+            { x: 3, y: 1, z: 0, layer: 2, isHidden: true },
+            // Bridge Layer 3: spans x=0..3 at y=2, z=0 (4 cubes)
+            { x: 0, y: 2, z: 0, layer: 3, isHidden: false },
+            { x: 1, y: 2, z: 0, layer: 3, isHidden: false },
+            { x: 2, y: 2, z: 0, layer: 3, isHidden: false },
+            { x: 3, y: 2, z: 0, layer: 3, isHidden: false },
+          ],
+          answerCount: 8,
+          visibleCount: 6,
+          misconceptionPrompt: '仔細看拱門兩側的柱子，每一根柱子都是由 2 顆積木堆高的喔！頂層的橫樑橫跨在上面！',
+          hints: [
+            '【角度觀察】旋轉視角觀察左右兩邊的柱子高達第 2 層，中間是空心的門洞！',
+            '【支撐柱概念】左柱 2 顆 + 右柱 2 顆 = 4 顆柱子積木。',
+            '【分層列式】第 1 層有 2 顆，第 2 層有 2 顆，頂層橫樑有 4 顆。2 + 2 + 4 = 8 顆！'
+          ],
+          layerBreakdown: { 1: 2, 2: 2, 3: 4 },
+          solutionHtml: '<strong>拆解法解析：</strong><br>• 左側立柱：2 顆<br>• 右側立柱：2 顆<br>• 上方橫樑（第 3 層）：4 顆<br>總數：2 + 2 + 4 = <strong>8 顆</strong>，體積為 <strong>8 cm³</strong>。'
+        }
+      ]
+    };
+
+    // ==========================================
+    // 4. Global App State & Badges
+    // ==========================================
+    const state = {
+      level: 2,
+      qIndex: 0,
+      xp: 120,
+      combo: 0,
+      highestCombo: 0,
+      rotations: 0,
+      layerSliderUses: 0,
+      misconceptionTriggers: 0,
+      totalAnswered: 0,
+      totalCorrect: 0,
+      consecutiveCorrect: 0,
+      currentScaffoldStep: 0,
+      markedCubes: new Set(),
+      isCountMode: false,
+      isXray: false,
+      layerSeparation: 0,
+      unlockedBadges: new Set()
+    };
+
+    const BADGES = [
+      { id: 'rotator', title: '空間透視眼', desc: '主動 360° 旋轉模型超過 5 次', icon: 'fa-eye', color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+      { id: 'foundation', title: '地基大師', desc: '成功找出被壓在底下的隱藏積木', icon: 'fa-shield-halved', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+      { id: 'architect', title: '積木建築師', desc: '解出進階不規則與中空形體難題', icon: 'fa-landmark', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+      { id: 'layer_master', title: '一層一層數達人', desc: '善用分層拆解拉桿看清內部結構', icon: 'fa-layer-group', color: 'text-cyan-600 bg-cyan-50 border-cyan-200' },
+      { id: 'combo_streak', title: '三連勝冒險王', desc: '連續答對 3 題空間挑戰題', icon: 'fa-fire', color: 'text-orange-600 bg-orange-50 border-orange-200' },
+    ];
+
+    function getCurrentQuestion() {
+      const qList = QUESTION_BANK[state.level];
+      if (!qList || qList.length === 0) return null;
+      return qList[state.qIndex % qList.length];
+    }
+
+    // ==========================================
+    // 5. Toast & UI Navigation
+    // ==========================================
+    function showToast(msg) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'px-4 py-2.5 bg-slate-900/90 text-white text-xs font-semibold rounded-xl shadow-lg border border-white/10 backdrop-blur pointer-events-auto transition-all duration-300 opacity-0 transform translate-y-2';
+      toast.innerHTML = msg;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
+      const activeSec = document.getElementById(`section-${tabId}`);
+      if (activeSec) activeSec.classList.remove('hidden');
+
+      // Update Desktop Nav Buttons (Order: context -> concept -> sandbox -> arena -> dashboard)
+      ['context', 'concept', 'sandbox', 'arena', 'dashboard'].forEach(t => {
+        const btn = document.getElementById(`nav-btn-${t}`);
+        if (!btn) return;
+        if (t === tabId) {
+          btn.className = 'hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-indigo-600 font-semibold whitespace-nowrap';
+        } else {
+          btn.className = 'hover:text-indigo-600 transition-colors flex items-center gap-1.5 text-slate-600 whitespace-nowrap';
+        }
+      });
+
+      // Update Mobile Nav Buttons
+      ['context', 'concept', 'sandbox', 'arena', 'dashboard'].forEach(t => {
+        const mobBtn = document.getElementById(`mob-nav-btn-${t}`);
+        if (!mobBtn) return;
+        if (t === tabId) {
+          mobBtn.className = 'px-3 py-1.5 rounded-lg whitespace-nowrap bg-indigo-50 text-indigo-700 font-bold';
+        } else {
+          mobBtn.className = 'px-3 py-1.5 rounded-lg whitespace-nowrap text-slate-600 hover:bg-slate-100';
+        }
+      });
+
+      // Scroll to top smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (tabId === 'arena') {
+        requestAnimationFrame(() => {
+          onArenaResize();
+        });
+      } else if (tabId === 'sandbox') {
+        initSandbox3D();
+        requestAnimationFrame(() => {
+          onSandboxResize();
+        });
+      } else if (tabId === 'dashboard') {
+        updateDashboard();
+      }
+    }
+
+    function updateGamificationUI() {
+      document.getElementById('xp-display').innerText = state.xp;
+      document.getElementById('combo-display').innerText = state.combo;
+      checkBadgeUnlocks();
+    }
+
+    function checkBadgeUnlocks() {
+      if (state.rotations >= 5 && !state.unlockedBadges.has('rotator')) {
+        unlockBadge('rotator');
+      }
+      if (state.layerSliderUses >= 3 && !state.unlockedBadges.has('layer_master')) {
+        unlockBadge('layer_master');
+      }
+      if (state.combo >= 3 && !state.unlockedBadges.has('combo_streak')) {
+        unlockBadge('combo_streak');
+      }
+      if (state.level === 3 && state.totalCorrect >= 1 && !state.unlockedBadges.has('architect')) {
+        unlockBadge('architect');
+      }
+    }
+
+    function unlockBadge(badgeId) {
+      state.unlockedBadges.add(badgeId);
+      const b = BADGES.find(x => x.id === badgeId);
+      if (b) {
+        playChime('badge');
+        showToast(`🏆 解鎖成就徽章：<strong>${b.title}</strong>！`);
+      }
+      renderBadges();
+    }
+
+    function renderBadges() {
+      const container = document.getElementById('badges-container');
+      if (!container) return;
+      container.innerHTML = BADGES.map(b => {
+        const isUnlocked = state.unlockedBadges.has(b.id);
+        return `
+          <div class="p-4 rounded-xl border ${isUnlocked ? b.color : 'bg-slate-50 border-slate-200 text-slate-400'} flex items-start gap-3 transition-all">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isUnlocked ? 'bg-white shadow-xs' : 'bg-slate-200 text-slate-400'}">
+              <i class="fa-solid ${b.icon} text-lg"></i>
+            </div>
+            <div>
+              <div class="text-sm font-bold ${isUnlocked ? 'text-slate-900' : 'text-slate-500'}">
+                ${b.title} ${isUnlocked ? '✓' : '🔒'}
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5 leading-relaxed">${b.desc}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // 6. Arena Three.js 3D Core
+    // ==========================================
+    let arenaScene, arenaCamera, arenaRenderer, arenaControls;
+    let arenaCubeMeshes = [];
+    let arenaRaycaster = new THREE.Raycaster();
+    let arenaMouse = new THREE.Vector2();
+    let arenaContainer = null;
+    let isAutoRotating = false;
+
+    // Layer Colors (Theme: Friendly, warm and high contrast)
+    const LAYER_COLORS = [
+      0xF59E0B, // Layer 1 (Amber / Wood)
+      0x3B82F6, // Layer 2 (Sky Azure)
+      0x10B981, // Layer 3 (Emerald Green)
+      0x8B5CF6, // Layer 4 (Violet)
+      0xEC4899  // Layer 5 (Pink)
+    ];
+
+    function initArena3D() {
+      arenaContainer = document.getElementById('three-canvas-container');
+      if (!arenaContainer) return;
+
+      arenaScene = new THREE.Scene();
+      arenaScene.background = new THREE.Color(0x0F172A); // Dark slate background
+
+      const width = arenaContainer.clientWidth || 600;
+      const height = arenaContainer.clientHeight || 480;
+
+      arenaCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      setCameraIsometric();
+
+      arenaRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      arenaRenderer.setSize(width, height);
+      arenaRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      arenaRenderer.shadowMap.enabled = true;
+      arenaRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      arenaContainer.innerHTML = '';
+      arenaContainer.appendChild(arenaRenderer.domElement);
+
+      arenaControls = new THREE.OrbitControls(arenaCamera, arenaRenderer.domElement);
+      arenaControls.enableDamping = true;
+      arenaControls.dampingFactor = 0.08;
+      arenaControls.maxPolarAngle = Math.PI / 2 + 0.1; // allow slight under-view, but not inverted
+      arenaControls.minDistance = 3;
+      arenaControls.maxDistance = 25;
+
+      // Track deliberate rotation for active exploration metric & badge
+      let lastAngle = 0;
+      arenaControls.addEventListener('change', () => {
+        const currentAngle = arenaControls.getAzimuthalAngle();
+        if (Math.abs(currentAngle - lastAngle) > 0.4) {
+          state.rotations++;
+          lastAngle = currentAngle;
+          checkBadgeUnlocks();
+        }
+      });
+
+      // Lighting (3-Point Studio Lighting)
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+      arenaScene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+      dirLight.position.set(10, 15, 10);
+      dirLight.castShadow = true;
+      arenaScene.add(dirLight);
+
+      const fillLight = new THREE.DirectionalLight(0x93C5FD, 0.4);
+      fillLight.position.set(-10, -5, -10);
+      arenaScene.add(fillLight);
+
+      // Floor grid plate
+      const gridHelper = new THREE.GridHelper(10, 10, 0x475569, 0x334155);
+      gridHelper.position.y = -0.505;
+      arenaScene.add(gridHelper);
+
+      // Raycast pointer listener for Click-to-Count
+      arenaRenderer.domElement.addEventListener('pointerdown', onArenaCanvasPointerDown);
+
+      // Resize observer
+      window.addEventListener('resize', onArenaResize);
+
+      // Animation loop
+      animateArena();
+
+      // Render initial question
+      renderCurrentQuestionModel();
+    }
+
+    function animateArena() {
+      requestAnimationFrame(animateArena);
+      if (isAutoRotating) {
+        arenaControls.autoRotate = true;
+        arenaControls.autoRotateSpeed = 3.5;
+      } else {
+        arenaControls.autoRotate = false;
+      }
+      arenaControls.update();
+      arenaRenderer.render(arenaScene, arenaCamera);
+    }
+
+    function onArenaResize() {
+      if (!arenaContainer || !arenaRenderer || !arenaCamera) return;
+      const w = arenaContainer.clientWidth;
+      const h = arenaContainer.clientHeight;
+      if (w === 0 || h === 0) return;
+      arenaCamera.aspect = w / h;
+      arenaCamera.updateProjectionMatrix();
+      arenaRenderer.setSize(w, h);
+    }
+
+    function setCameraIsometric() {
+      arenaCamera.position.set(7, 6, 7);
+      if (arenaControls) {
+        arenaControls.target.set(0, 0.5, 0);
+        arenaControls.update();
+      }
+    }
+
+    function setCameraView(view) {
+      if (!arenaControls) return;
+      const dist = 9;
+      if (view === 'front') {
+        arenaCamera.position.set(0, 0.5, dist);
+        arenaControls.target.set(0, 0.5, 0);
+      } else if (view === 'side') {
+        arenaCamera.position.set(dist, 0.5, 0);
+        arenaControls.target.set(0, 0.5, 0);
+      } else if (view === 'top') {
+        arenaCamera.position.set(0, dist + 1, 0.001); // slight offset to prevent gimbal lock
+        arenaControls.target.set(0, 0.5, 0);
+      } else if (view === 'iso') {
+        setCameraIsometric();
+      }
+      arenaControls.update();
+      playChime('click');
+      state.rotations++;
+      checkBadgeUnlocks();
+    }
+
+    function resetCameraAndZoom() {
+      setCameraIsometric();
+      showToast('視角已重置為預設俯角');
+    }
+
+    // Render Question Model with 1cm3 unit cubes
+    function renderCurrentQuestionModel() {
+      const q = getCurrentQuestion();
+      if (!q || !arenaScene) return;
+
+      // Clean existing cube meshes
+      arenaCubeMeshes.forEach(item => {
+        arenaScene.remove(item.mesh);
+        item.mesh.geometry.dispose();
+        if (Array.isArray(item.mesh.material)) {
+          item.mesh.material.forEach(m => m.dispose());
+        } else {
+          item.mesh.material.dispose();
+        }
+      });
+      arenaCubeMeshes = [];
+      state.markedCubes.clear();
+      updateMarkedBadge();
+
+      // Find center bounding box to center model around (0,0,0)
+      let minX = Infinity, maxX = -Infinity;
+      let minZ = Infinity, maxZ = -Infinity;
+      let maxY = 0;
+
+      q.cubes.forEach(c => {
+        minX = Math.min(minX, c.x);
+        maxX = Math.max(maxX, c.x);
+        minZ = Math.min(minZ, c.z);
+        maxZ = Math.max(maxZ, c.z);
+        maxY = Math.max(maxY, c.y);
+      });
+
+      const offsetX = (minX + maxX) / 2;
+      const offsetZ = (minZ + maxZ) / 2;
+
+      // Geometry for standard 1 unit cube
+      const cubeGeo = new THREE.BoxGeometry(0.96, 0.96, 0.96);
+      const edgeGeo = new THREE.EdgesGeometry(cubeGeo);
+
+      q.cubes.forEach((cubeData, index) => {
+        const layerIdx = cubeData.layer || (cubeData.y + 1);
+        const color = LAYER_COLORS[(layerIdx - 1) % LAYER_COLORS.length];
+
+        // Standard Material
+        const material = new THREE.MeshStandardMaterial({
+          color: color,
+          roughness: 0.35,
+          metalness: 0.1,
+          transparent: false,
+          opacity: 1.0
+        });
+
+        const mesh = new THREE.Mesh(cubeGeo, material);
+        const worldX = cubeData.x - offsetX;
+        const worldY = cubeData.y;
+        const worldZ = cubeData.z - offsetZ;
+
+        mesh.position.set(worldX, worldY, worldZ);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        // High-contrast clean outline edge so students clearly distinguish unit cubes
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x0F172A, linewidth: 2 });
+        const wireframe = new THREE.LineSegments(edgeGeo, edgeMaterial);
+        mesh.add(wireframe);
+
+        mesh.userData = {
+          cubeId: index,
+          layer: layerIdx,
+          baseY: worldY,
+          isHidden: !!cubeData.isHidden,
+          originalColor: color,
+          marked: false
+        };
+
+        arenaScene.add(mesh);
+        arenaCubeMeshes.push({ mesh, data: cubeData });
+      });
+
+      // Reset layer slider & X-ray mode on new question
+      resetLayerSlider(false);
+      resetXrayMode(false);
+    }
+
+    // Exploded Layer Slider (分層拆解拉桿)
+    function onLayerSliderChange(val) {
+      state.layerSeparation = parseFloat(val) / 100;
+      applyLayerSeparation();
+      if (val > 10) {
+        state.layerSliderUses++;
+        checkBadgeUnlocks();
+      }
+    }
+
+    function applyLayerSeparation() {
+      const spread = state.layerSeparation * 1.6; // separation distance per layer
+      arenaCubeMeshes.forEach(item => {
+        const m = item.mesh;
+        const layer = m.userData.layer || 1;
+        m.position.y = m.userData.baseY + (layer - 1) * spread;
+      });
+    }
+
+    function resetLayerSlider(notify = true) {
+      const slider = document.getElementById('layer-slider');
+      if (slider) slider.value = 0;
+      state.layerSeparation = 0;
+      applyLayerSeparation();
+      if (notify) showToast('分層已緊合');
+    }
+
+    // X-Ray Mode (X光透視切換)
+    function toggleXrayMode() {
+      state.isXray = !state.isXray;
+      applyXrayMode();
+      playChime('click');
+      const statusSpan = document.getElementById('xray-mode-status');
+      const btn = document.getElementById('btn-xray-mode');
+      if (state.isXray) {
+        statusSpan.innerText = '開啟';
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-cyan-900/90 text-cyan-200 border-cyan-400 shadow-sm';
+        showToast('🔍 X光透視開啟：隱藏積木以螢光亮起！');
+      } else {
+        statusSpan.innerText = '關閉';
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-slate-800/90 text-slate-200 border-white/10 hover:bg-slate-700';
+      }
+    }
+
+    function resetXrayMode(notify = true) {
+      state.isXray = false;
+      applyXrayMode();
+      const statusSpan = document.getElementById('xray-mode-status');
+      const btn = document.getElementById('btn-xray-mode');
+      if (statusSpan) statusSpan.innerText = '關閉';
+      if (btn) btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-slate-800/90 text-slate-200 border-white/10 hover:bg-slate-700';
+    }
+
+    function applyXrayMode() {
+      arenaCubeMeshes.forEach(item => {
+        const m = item.mesh;
+        const isHidden = m.userData.isHidden;
+        const isMarked = m.userData.marked;
+
+        if (state.isXray) {
+          if (isHidden) {
+            // Fluorescent glowing amber/magenta for hidden foundation cubes
+            m.material.transparent = false;
+            m.material.opacity = 1.0;
+            m.material.color.setHex(0xFF1493); // Deep pink / Neon highlight
+            m.material.emissive.setHex(0xFF0055);
+            m.material.emissiveIntensity = 0.5;
+          } else {
+            // Outer cubes turn semi-transparent
+            m.material.transparent = true;
+            m.material.opacity = 0.28;
+            m.material.emissive.setHex(0x000000);
+          }
+        } else {
+          // Restore normal appearance
+          m.material.transparent = false;
+          m.material.opacity = 1.0;
+          m.material.emissive.setHex(0x000000);
+          if (isMarked) {
+            m.material.color.setHex(0xFBBF24); // Marked Yellow
+          } else {
+            m.material.color.setHex(m.userData.originalColor);
+          }
+        }
+      });
+    }
+
+    // Click-to-Count Mode (👆 點擊標記計數模式)
+    function toggleCountMode() {
+      state.isCountMode = !state.isCountMode;
+      const statusSpan = document.getElementById('count-mode-status');
+      const btn = document.getElementById('btn-count-mode');
+      const clearBtn = document.getElementById('btn-clear-marked');
+
+      if (state.isCountMode) {
+        statusSpan.innerText = '開啟';
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-indigo-900/90 text-indigo-200 border-indigo-400 shadow-sm';
+        showToast('👆 點擊標記計數模式已開啟：直接點擊 3D 模型方塊進行計數！');
+        if (clearBtn) clearBtn.classList.remove('hidden');
+      } else {
+        statusSpan.innerText = '關閉';
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all flex items-center gap-1.5 bg-slate-800/90 text-slate-200 border-white/10 hover:bg-slate-700';
+      }
+      playChime('click');
+    }
+
+    function onArenaCanvasPointerDown(e) {
+      if (!state.isCountMode) return;
+
+      const rect = arenaRenderer.domElement.getBoundingClientRect();
+      arenaMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      arenaMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      arenaRaycaster.setFromCamera(arenaMouse, arenaCamera);
+      const meshesToTest = arenaCubeMeshes.map(i => i.mesh);
+      const intersects = arenaRaycaster.intersectObjects(meshesToTest, false);
+
+      if (intersects.length > 0) {
+        const hitMesh = intersects[0].object;
+        toggleCubeMark(hitMesh);
+      }
+    }
+
+    function toggleCubeMark(mesh) {
+      const cubeId = mesh.userData.cubeId;
+      mesh.userData.marked = !mesh.userData.marked;
+
+      if (mesh.userData.marked) {
+        state.markedCubes.add(cubeId);
+        mesh.material.color.setHex(0xFBBF24); // bright amber/yellow
+        playChime('click');
+      } else {
+        state.markedCubes.delete(cubeId);
+        mesh.material.color.setHex(mesh.userData.originalColor);
+        playChime('click');
+      }
+
+      updateMarkedBadge();
+    }
+
+    function clearMarkedCubes() {
+      state.markedCubes.clear();
+      arenaCubeMeshes.forEach(item => {
+        item.mesh.userData.marked = false;
+        if (!state.isXray) {
+          item.mesh.material.color.setHex(item.mesh.userData.originalColor);
+        }
+      });
+      updateMarkedBadge();
+      showToast('已清除所有標記');
+      playChime('click');
+    }
+
+    function updateMarkedBadge() {
+      const badge = document.getElementById('marked-count-badge');
+      const inputCount = document.getElementById('input-count');
+      const count = state.markedCubes.size;
+
+      if (count > 0) {
+        badge.innerText = `${count} 個已標記`;
+        badge.classList.remove('hidden');
+        // Auto fill into input for convenience if user wants
+        if (inputCount && inputCount.value === '') {
+          inputCount.value = count;
+          autoFillVolume();
+        }
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    // ==========================================
+    // 7. Cognitive Diagnostic & 3-Step Scaffolding
+    // ==========================================
+    function autoFillVolume() {
+      const countVal = document.getElementById('input-count').value;
+      if (countVal !== '') {
+        document.getElementById('input-volume').value = countVal;
+      }
+    }
+
+    // When typing count, sync with volume automatically
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputC = document.getElementById('input-count');
+      if (inputC) {
+        inputC.addEventListener('input', (e) => {
+          document.getElementById('input-volume').value = e.target.value;
+        });
+      }
+    });
+
+    function submitAnswer() {
+      const q = getCurrentQuestion();
+      if (!q) return;
+
+      const countInput = parseInt(document.getElementById('input-count').value, 10);
+      const volumeInput = parseInt(document.getElementById('input-volume').value, 10);
+
+      if (isNaN(countInput) || isNaN(volumeInput)) {
+        showToast('請先輸入數量與體積數值喔！');
+        return;
+      }
+
+      state.totalAnswered++;
+
+      // Check for Primary Diagnostic Misconception (Counting only visible cubes)
+      if (countInput === q.visibleCount && q.visibleCount !== q.answerCount) {
+        handleMisconceptionTrigger(q);
+        return;
+      }
+
+      // Check Correct Answer
+      if (countInput === q.answerCount && volumeInput === q.answerCount) {
+        handleCorrectAnswer(q);
+      } else {
+        handleWrongAnswer(q, countInput);
+      }
+    }
+
+    // Trigger Dedicated Cognitive Conflict
+    function handleMisconceptionTrigger(q) {
+      state.misconceptionTriggers++;
+      state.combo = 0;
+      updateGamificationUI();
+      playChime('wrong');
+
+      const banner = document.getElementById('misconception-banner');
+      const textElem = document.getElementById('misconception-text');
+      textElem.innerHTML = `
+        ${q.misconceptionPrompt}
+        <br><br>
+        <strong>教學引導提問：</strong>二樓的積木在半空中，底下必須有支撐的積木才不會掉下來！請點擊下方按鈕或拉動「分層拉桿」，看穿被遮蔽的地基！
+      `;
+      banner.classList.remove('hidden');
+
+      // Scroll smoothly to diagnostic
+      banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // TTS voice alert
+      speakText('抓住關鍵盲點！你輸入的數字剛好是表面看得見的積木數量。仔細想一想，二樓底下的積木會不會掉下來呢？');
+    }
+
+    function triggerAutoInspectMisconception() {
+      // Auto enable X-ray & slide exploded slider to 50% to provoke cognitive restructuring!
+      if (!state.isXray) toggleXrayMode();
+      const slider = document.getElementById('layer-slider');
+      if (slider) {
+        slider.value = 50;
+        onLayerSliderChange(50);
+      }
+      playChime('hint');
+      showToast('✨ 已為你展開分層與 X 光透視，看見底下被壓住的方塊了嗎？');
+    }
+
+    // 3-Step Scaffolding Engine
+    function handleWrongAnswer(q, inputVal) {
+      state.combo = 0;
+      updateGamificationUI();
+      playChime('wrong');
+
+      // Hide misconception banner if it was standard calculation mistake
+      document.getElementById('misconception-banner').classList.add('hidden');
+
+      state.currentScaffoldStep = Math.min(state.currentScaffoldStep + 1, 4);
+      updateScaffoldCard(q);
+    }
+
+    function updateScaffoldCard(q) {
+      const step = state.currentScaffoldStep;
+      const label = document.getElementById('scaffold-step-label');
+      const content = document.getElementById('scaffold-content');
+      const interactive = document.getElementById('scaffold-interactive');
+
+      interactive.classList.add('hidden');
+      interactive.innerHTML = '';
+
+      if (step === 1) {
+        label.innerText = '引導 Hint 1【角度與觀察提問】';
+        content.innerHTML = `
+          <div class="text-amber-800 font-semibold mb-1">
+            <i class="fa-solid fa-compass mr-1"></i> ${q.hints[0]}
+          </div>
+          <button onclick="demoRotateHint()" class="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+            <i class="fa-solid fa-play"></i> 點我示範自動輕微旋轉
+          </button>
+        `;
+        demoRotateHint();
+        speakText(q.hints[0]);
+      } else if (step === 2) {
+        label.innerText = '引導 Hint 2【關鍵概念與重力支撐提問】';
+        content.innerHTML = `
+          <div class="text-indigo-800 font-semibold mb-1">
+            <i class="fa-solid fa-cube mr-1"></i> ${q.hints[1]}
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button onclick="toggleXrayMode()" class="px-2.5 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg border border-indigo-200">
+              <i class="fa-solid fa-eye"></i> 切換 X 光透視
+            </button>
+          </div>
+        `;
+        if (!state.isXray) toggleXrayMode();
+        speakText(q.hints[1]);
+      } else if (step === 3) {
+        label.innerText = '引導 Hint 3【分層列式拆解提問】';
+        content.innerHTML = `
+          <div class="text-emerald-800 font-semibold mb-2">
+            <i class="fa-solid fa-list-ol mr-1"></i> ${q.hints[2]}
+          </div>
+        `;
+
+        // Automatically pull exploded slider to 50%
+        const slider = document.getElementById('layer-slider');
+        if (slider) {
+          slider.value = 55;
+          onLayerSliderChange(55);
+        }
+
+        // Render interactive layer math fill-in-the-blank
+        const layers = Object.keys(q.layerBreakdown || {}).sort((a,b) => b-a);
+        if (layers.length > 0) {
+          interactive.classList.remove('hidden');
+          const formulaInputs = layers.map((lvl, i) => `
+            <div class="flex items-center gap-1.5 text-xs">
+              <span class="font-medium text-slate-700">第 ${lvl} 層：</span>
+              <input type="number" id="scaffold-layer-${lvl}" placeholder="?" class="w-12 px-2 py-1 text-center font-bold font-mono border rounded bg-white" />
+              <span>顆</span>
+              ${i < layers.length - 1 ? '<span class="font-bold text-slate-400">+</span>' : ''}
+            </div>
+          `).join('');
+
+          interactive.innerHTML = `
+            <div class="bg-indigo-50/70 p-3 rounded-xl border border-indigo-200/60">
+              <div class="text-xs font-bold text-indigo-900 mb-2">動手分層填填看：</div>
+              <div class="flex flex-wrap items-center gap-2 mb-2">
+                ${formulaInputs}
+              </div>
+              <button onclick="checkScaffoldFormula()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
+                核對分層算式
+              </button>
+              <div id="scaffold-formula-msg" class="text-xs mt-1.5 hidden"></div>
+            </div>
+          `;
+        }
+        speakText(q.hints[2]);
+      } else if (step >= 4) {
+        label.innerText = '完整解析【Step-by-step Solution】';
+        content.innerHTML = `
+          <div class="text-slate-800 leading-relaxed text-xs">
+            ${q.solutionHtml}
+          </div>
+        `;
+      }
+    }
+
+    function checkScaffoldFormula() {
+      const q = getCurrentQuestion();
+      if (!q || !q.layerBreakdown) return;
+
+      const layers = Object.keys(q.layerBreakdown);
+      let allCorrect = true;
+      let total = 0;
+
+      layers.forEach(lvl => {
+        const input = document.getElementById(`scaffold-layer-${lvl}`);
+        const expected = q.layerBreakdown[lvl];
+        if (!input || parseInt(input.value, 10) !== expected) {
+          allCorrect = false;
+        } else {
+          total += expected;
+        }
+      });
+
+      const msg = document.getElementById('scaffold-formula-msg');
+      msg.classList.remove('hidden');
+
+      if (allCorrect) {
+        msg.className = 'text-xs mt-1.5 font-bold text-emerald-600';
+        msg.innerText = `太棒了！各層數量完全正確，加起來總共是 ${total} 顆！快填入上方答案欄吧！`;
+        playChime('correct');
+        document.getElementById('input-count').value = total;
+        document.getElementById('input-volume').value = total;
+      } else {
+        msg.className = 'text-xs mt-1.5 font-bold text-rose-600';
+        msg.innerText = '有某一層數錯囉！請拉動分層拆解拉桿，單獨數那一層的方塊。';
+        playChime('wrong');
+      }
+    }
+
+    function demoRotateHint() {
+      isAutoRotating = true;
+      setTimeout(() => {
+        isAutoRotating = false;
+      }, 2500);
+    }
+
+    function handleCorrectAnswer(q) {
+      state.totalCorrect++;
+      state.consecutiveCorrect++;
+      state.combo++;
+      if (state.combo > state.highestCombo) state.highestCombo = state.combo;
+      state.xp += 30;
+
+      playChime('correct');
+      updateGamificationUI();
+
+      // Show success banner
+      document.getElementById('success-banner').classList.remove('hidden');
+      document.getElementById('misconception-banner').classList.add('hidden');
+
+      // Adaptive Level Up Trigger
+      if (state.consecutiveCorrect >= 2 && state.level < 3) {
+        setTimeout(() => {
+          showToast(`🌟 連續答對 2 題！系統為你解鎖晉升至 Level ${state.level + 1} 挑戰！`);
+          setLevel(state.level + 1);
+        }, 1500);
+      }
+    }
+
+    function nextQuestion() {
+      state.qIndex++;
+      state.currentScaffoldStep = 0;
+      document.getElementById('success-banner').classList.add('hidden');
+      document.getElementById('misconception-banner').classList.add('hidden');
+      document.getElementById('input-count').value = '';
+      document.getElementById('input-volume').value = '';
+
+      const scaffoldCard = document.getElementById('scaffold-card');
+      document.getElementById('scaffold-step-label').innerText = '準備就緒';
+      document.getElementById('scaffold-content').innerText = '答錯時別灰心，系統不會直接公佈答案，而是提供三層引導問題，一步步帶你找出隱藏的方塊！';
+      document.getElementById('scaffold-interactive').classList.add('hidden');
+
+      updateLevelUI();
+      renderCurrentQuestionModel();
+    }
+
+    function setLevel(lvl) {
+      state.level = lvl;
+      state.qIndex = 0;
+      state.currentScaffoldStep = 0;
+      state.consecutiveCorrect = 0;
+
+      [1, 2, 3].forEach(l => {
+        const btn = document.getElementById(`btn-lvl-${l}`);
+        if (!btn) return;
+        if (l === lvl) {
+          btn.className = 'px-3 py-1.5 rounded-lg transition-colors bg-white text-indigo-600 shadow-xs font-semibold';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg transition-colors text-slate-600 hover:text-slate-900';
+        }
+      });
+
+      updateLevelUI();
+      renderCurrentQuestionModel();
+      playChime('click');
+    }
+
+    function updateLevelUI() {
+      const q = getCurrentQuestion();
+      if (!q) return;
+
+      const levelBadge = document.getElementById('level-badge');
+      const category = document.getElementById('question-category');
+      const title = document.getElementById('question-title');
+
+      if (state.level === 1) {
+        levelBadge.className = 'px-2.5 py-1 bg-emerald-50 border border-emerald-200/60 rounded-md text-emerald-700 font-bold';
+        levelBadge.innerText = 'Level 1 · 基礎補強梯隊';
+      } else if (state.level === 2) {
+        levelBadge.className = 'px-2.5 py-1 bg-indigo-50 border border-indigo-200/60 rounded-md text-indigo-700 font-bold';
+        levelBadge.innerText = 'Level 2 · 標準挑戰梯隊';
+      } else {
+        levelBadge.className = 'px-2.5 py-1 bg-purple-50 border border-purple-200/60 rounded-md text-purple-700 font-bold';
+        levelBadge.innerText = 'Level 3 · 進階高階梯隊';
+      }
+
+      category.innerText = q.category;
+      title.innerText = q.title;
+    }
+
+    // ==========================================
+    // 8. 3D Free Cube Sandbox (自由積木實驗室)
+    // ==========================================
+    let sbScene, sbCamera, sbRenderer, sbControls;
+    let sbCubes = []; // array of {x, y, z, mesh}
+    let sbInitialized = false;
+
+    function initSandbox3D() {
+      if (sbInitialized) return;
+      sbInitialized = true;
+
+      const container = document.getElementById('sandbox-three-container');
+      if (!container) return;
+
+      sbScene = new THREE.Scene();
+      sbScene.background = new THREE.Color(0x0F172A);
+
+      const width = container.clientWidth || 600;
+      const height = container.clientHeight || 500;
+
+      sbCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      sbCamera.position.set(6, 6, 6);
+
+      sbRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      sbRenderer.setSize(width, height);
+      sbRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(sbRenderer.domElement);
+
+      sbControls = new THREE.OrbitControls(sbCamera, sbRenderer.domElement);
+      sbControls.enableDamping = true;
+      sbControls.dampingFactor = 0.08;
+      sbControls.target.set(0, 0.5, 0);
+
+      const amb = new THREE.AmbientLight(0xffffff, 0.7);
+      sbScene.add(amb);
+
+      const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+      dir.position.set(8, 12, 8);
+      sbScene.add(dir);
+
+      const grid = new THREE.GridHelper(8, 8, 0x475569, 0x334155);
+      grid.position.y = -0.505;
+      sbScene.add(grid);
+
+      window.addEventListener('resize', onSandboxResize);
+
+      function animateSandbox() {
+        requestAnimationFrame(animateSandbox);
+        sbControls.update();
+        sbRenderer.render(sbScene, sbCamera);
+      }
+      animateSandbox();
+
+      // Load initial single cube
+      loadSandboxPreset('single');
+    }
+
+    function onSandboxResize() {
+      const container = document.getElementById('sandbox-three-container');
+      if (!container || !sbRenderer || !sbCamera) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
+      sbCamera.aspect = w / h;
+      sbCamera.updateProjectionMatrix();
+      sbRenderer.setSize(w, h);
+    }
+
+    function clearSandbox() {
+      sbCubes.forEach(c => {
+        sbScene.remove(c.mesh);
+        c.mesh.geometry.dispose();
+        c.mesh.material.dispose();
+      });
+      sbCubes = [];
+      updateSandboxMetrics();
+      showToast('實驗室畫布已清空');
+    }
+
+    function addCubeToSandbox(x, y, z) {
+      // Check if already exists
+      if (sbCubes.some(c => c.x === x && c.y === y && c.z === z)) return;
+
+      const cubeGeo = new THREE.BoxGeometry(0.96, 0.96, 0.96);
+      const edgeGeo = new THREE.EdgesGeometry(cubeGeo);
+      const color = LAYER_COLORS[y % LAYER_COLORS.length];
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.35,
+        metalness: 0.1
+      });
+
+      const mesh = new THREE.Mesh(cubeGeo, mat);
+      mesh.position.set(x, y, z);
+
+      const wireframe = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x0F172A }));
+      mesh.add(wireframe);
+
+      sbScene.add(mesh);
+      sbCubes.push({ x, y, z, mesh });
+      updateSandboxMetrics();
+    }
+
+    function loadSandboxPreset(preset) {
+      clearSandbox();
+      if (preset === 'single') {
+        addCubeToSandbox(0, 0, 0);
+      } else if (preset === 'cuboid' || preset === 'cuboid423') {
+        const len = (preset === 'cuboid423') ? 4 : 3;
+        const height = (preset === 'cuboid423') ? 3 : 2;
+        for (let y = 0; y < height; y++) {
+          for (let z = 0; z < 2; z++) {
+            for (let x = 0; x < len; x++) {
+              addCubeToSandbox(x - (len - 1) / 2, y, z - 0.5);
+            }
+          }
+        }
+      } else if (preset === 'stairs') {
+        // Base 3x2 (6 cubes)
+        for (let z = 0; z < 2; z++) {
+          for (let x = 0; x < 3; x++) {
+            addCubeToSandbox(x - 1, 0, z - 0.5);
+          }
+        }
+        // Top 2x2 on left (4 cubes)
+        for (let z = 0; z < 2; z++) {
+          for (let x = 0; x < 2; x++) {
+            addCubeToSandbox(x - 1, 1, z - 0.5);
+          }
+        }
+      } else if (preset === 'hollow') {
+        // 3x3 hollow center on y=0 (8 cubes)
+        for (let z = 0; z < 3; z++) {
+          for (let x = 0; x < 3; x++) {
+            if (x === 1 && z === 1) continue; // center empty
+            addCubeToSandbox(x - 1, 0, z - 1);
+          }
+        }
+        // 4 corner pillars on y=1
+        addCubeToSandbox(-1, 1, -1);
+        addCubeToSandbox(1, 1, -1);
+        addCubeToSandbox(-1, 1, 1);
+        addCubeToSandbox(1, 1, 1);
+      }
+      playChime('click');
+    }
+
+    function loadAndInspectConcept(id) {
+      switchTab('sandbox');
+      if (id === 1) {
+        loadSandboxPreset('cuboid423');
+        showToast('已載入【例題一：4×2×3 長方體柱】！可在 3D 空間自由旋轉觀察！');
+      } else if (id === 2) {
+        loadSandboxPreset('stairs');
+        showToast('已載入【例題二：階梯複合形體】！注意看二樓底下被支撐的 4 顆地基！');
+      } else if (id === 3) {
+        loadSandboxPreset('hollow');
+        showToast('已載入【例題三：中空回字形】！轉到上方鳥瞰中間中空的天井！');
+      }
+    }
+
+    function addSandboxLayer() {
+      if (sbCubes.length === 0) {
+        addCubeToSandbox(0, 0, 0);
+        return;
+      }
+      // Find current top layer
+      let maxY = 0;
+      sbCubes.forEach(c => { maxY = Math.max(maxY, c.y); });
+      const currentTopCubes = sbCubes.filter(c => c.y === maxY);
+
+      // Stack directly above current top layer
+      currentTopCubes.forEach(c => {
+        addCubeToSandbox(c.x, maxY + 1, c.z);
+      });
+      playChime('click');
+      showToast(`已加疊第 ${maxY + 2} 層積木！`);
+    }
+
+    function addSandboxRandomCube() {
+      // Pick an existing cube and place on top or beside
+      if (sbCubes.length === 0) {
+        addCubeToSandbox(0, 0, 0);
+        return;
+      }
+      const base = sbCubes[Math.floor(Math.random() * sbCubes.length)];
+      const dirs = [
+        { x: 1, y: 0, z: 0 },
+        { x: -1, y: 0, z: 0 },
+        { x: 0, y: 1, z: 0 },
+        { x: 0, y: 0, z: 1 },
+        { x: 0, y: 0, z: -1 }
+      ];
+      for (const d of dirs) {
+        const nx = base.x + d.x;
+        const ny = Math.max(0, base.y + d.y);
+        const nz = base.z + d.z;
+        if (!sbCubes.some(c => c.x === nx && c.y === ny && c.z === nz)) {
+          addCubeToSandbox(nx, ny, nz);
+          playChime('click');
+          return;
+        }
+      }
+    }
+
+    function updateSandboxMetrics() {
+      const count = sbCubes.length;
+      document.getElementById('sb-count').innerText = count;
+      document.getElementById('sb-volume').innerHTML = `${count} <span class="text-sm font-sans font-normal">cm³</span>`;
+
+      if (count === 0) {
+        document.getElementById('sb-dims').innerText = '0 × 0 × 0 cm';
+        document.getElementById('sb-layer-breakdown').innerHTML = '<div class="text-slate-400 p-2">目前無積木</div>';
+        return;
+      }
+
+      let minX = Infinity, maxX = -Infinity;
+      let minY = Infinity, maxY = -Infinity;
+      let minZ = Infinity, maxZ = -Infinity;
+
+      const layerCounts = {};
+
+      sbCubes.forEach(c => {
+        minX = Math.min(minX, c.x);
+        maxX = Math.max(maxX, c.x);
+        minY = Math.min(minY, c.y);
+        maxY = Math.max(maxY, c.y);
+        minZ = Math.min(minZ, c.z);
+        maxZ = Math.max(maxZ, c.z);
+
+        const lvl = c.y + 1;
+        layerCounts[lvl] = (layerCounts[lvl] || 0) + 1;
+      });
+
+      const len = maxX - minX + 1;
+      const height = maxY - minY + 1;
+      const width = maxZ - minZ + 1;
+
+      document.getElementById('sb-dims').innerText = `${len} × ${width} × ${height} cm`;
+
+      // Vertical Layer breakdown
+      const sortedLayers = Object.keys(layerCounts).sort((a,b) => b-a);
+      const layerHtml = sortedLayers.map(l => `
+        <div class="flex justify-between p-2 bg-slate-50 rounded-lg">
+          <span>第 ${l} 層</span>
+          <span class="font-mono font-bold text-slate-900">${layerCounts[l]} 顆 (${layerCounts[l]} cm³)</span>
+        </div>
+      `).join('');
+
+      document.getElementById('sb-layer-breakdown').innerHTML = layerHtml;
+    }
+
+    // ==========================================
+    // 9. Pre-concept Quick Checks (面積 vs 體積)
+    // ==========================================
+    function checkConceptQ(qNum, choice) {
+      if (qNum === 1) {
+        const feedback = document.getElementById('q1-feedback');
+        feedback.classList.remove('hidden');
+        if (choice === 'area') {
+          feedback.className = 'text-xs mt-2.5 p-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium';
+          feedback.innerHTML = '🎉 答對了！鋪地墊是在量「平面的大小」，單位是平方公分 (cm²)！';
+          playChime('correct');
+        } else {
+          feedback.className = 'text-xs mt-2.5 p-2 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 font-medium';
+          feedback.innerHTML = '再想一想喔！地墊只有平平鋪在地板上，沒有堆疊高度，所以量測的是「面積」！';
+          playChime('wrong');
+        }
+      } else if (qNum === 2) {
+        const feedback = document.getElementById('q2-feedback');
+        feedback.classList.remove('hidden');
+        if (choice === 'volume') {
+          feedback.className = 'text-xs mt-2.5 p-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium';
+          feedback.innerHTML = '🎉 太棒了！紙箱能裝多少罐牛奶，是量測整個立體容器能容納的空間，叫做「體積與容積」，單位是立方公分 (cm³)！';
+          playChime('correct');
+        } else {
+          feedback.className = 'text-xs mt-2.5 p-2 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 font-medium';
+          feedback.innerHTML = '想一想！如果紙箱只有長寬面積夠大，但深度是 0，裝得下鮮奶罐嗎？立體空間必須考慮高度，所以是「體積」喔！';
+          playChime('wrong');
+        }
+      }
+    }
+
+    // ==========================================
+    // 10. Dashboard & Exit Ticket
+    // ==========================================
+    let exitScore = 0;
+    const answeredExitQ = new Set();
+
+    function updateDashboard() {
+      // Update Metrics
+      const acc = state.totalAnswered > 0 ? Math.round((state.totalCorrect / state.totalAnswered) * 100) : 100;
+      document.getElementById('dash-accuracy').innerText = `${acc}%`;
+      document.getElementById('dash-total-q').innerText = `累計答對 ${state.totalCorrect} / ${state.totalAnswered} 題`;
+      document.getElementById('dash-rotation').innerText = `${state.rotations} 次`;
+      document.getElementById('dash-layer-slider').innerText = `${state.layerSliderUses} 次`;
+      document.getElementById('dash-misconception').innerText = `${state.misconceptionTriggers} 次`;
+
+      renderBadges();
+      generateAiPrompt();
+    }
+
+    function checkExitTicket(qNum, answer) {
+      if (answeredExitQ.has(qNum)) return;
+      answeredExitQ.add(qNum);
+
+      let isCorrect = false;
+      if (qNum === 1 && answer === 6) isCorrect = true;
+      if (qNum === 2 && answer === 'correct') isCorrect = true;
+      if (qNum === 3 && answer === 'correct') isCorrect = true;
+
+      // Style buttons
+      document.querySelectorAll(`.exit-q${qNum}`).forEach(btn => {
+        btn.disabled = true;
+      });
+
+      if (isCorrect) {
+        exitScore++;
+        playChime('correct');
+        showToast(`Exit Ticket 第 ${qNum} 題答對！`);
+      } else {
+        playChime('wrong');
+        showToast(`Exit Ticket 第 ${qNum} 題需要再複習一下喔！`);
+      }
+
+      document.getElementById('exit-score').innerText = `得分：${exitScore} / 3`;
+      generateAiPrompt();
+    }
+
+    // ==========================================
+    // 11. AI Self-Study Prompt Generator
+    // ==========================================
+    function generateAiPrompt() {
+      const promptBox = document.getElementById('ai-prompt-box');
+      if (!promptBox) return;
+
+      const acc = state.totalAnswered > 0 ? Math.round((state.totalCorrect / state.totalAnswered) * 100) : 100;
+      const misconceptionStatus = state.misconceptionTriggers > 0
+        ? `在數階梯型複合積木時，曾經觸發 ${state.misconceptionTriggers} 次「只數表面看得到的方塊，忽略底下支撐隱藏方塊」的常見迷思`
+        : `空間概念良好，在數階梯形體時能主動考慮到底層支撐的隱藏積木`;
+
+      const explorationStatus = state.rotations >= 5
+        ? `具備良好的 3D 空間主動旋轉與多視角觀察習慣（旋轉達 ${state.rotations} 次）`
+        : `需要多被提醒從側面與背面旋轉觀察模型`;
+
+      const promptText = `你是一位親切、有耐心且精通「蘇格拉底引導式提問」的國小四年級數學個人家教老師。請根據我的學習歷程與空間幾何能力，陪伴我繼續自學體積單元：
+
+【我的學習者檔案與診斷報告】
+• 身份：國小四年級數學探索家
+• 目前掌握的幾何難度：已完成 Level ${state.level} 挑戰（累計正確率：${acc}%，最高連勝：${state.highestCombo} 題）
+• 核心迷思診斷：${misconceptionStatus}
+• 空間探索習慣：${explorationStatus}
+• 分層拆解思維：使用垂直分層剖析次數為 ${state.layerSliderUses} 次
+
+【請 AI 老師為我進行的引導任務】
+1. 請以生活化、熱情且富鼓勵性的語氣，針對我上述的迷思（隱藏積木與重力支撐）給予一段 2 句話的溫暖回饋。
+2. 請為我出 3 道結合生活情境的「體積與空間挑戰題」（例如：麥塊蓋房子的基底地基、超商物流紙箱裝盒、或是樂高積木組裝）。
+3. 規則：出題時請先出第 1 題，請「絕對不要直接告訴我答案」，等我回答後，再用「三階段漸進式鷹架（角度提示 -> 重力地基提示 -> 分層計算提示）」一步一步引導我想出答案！`;
+
+      promptBox.innerText = promptText;
+    }
+
+    function copyGeneratedPrompt() {
+      const promptText = document.getElementById('ai-prompt-box').innerText;
+      const copyBtnText = document.getElementById('copy-btn-text');
+
+      // Resilient Dual-Fallback Copying Method (navigator.clipboard + execCommand fallback)
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(promptText)
+          .then(() => onCopySuccess(copyBtnText))
+          .catch(() => fallbackCopy(promptText, copyBtnText));
+      } else {
+        fallbackCopy(promptText, copyBtnText);
+      }
+    }
+
+    function fallbackCopy(text, btnTextElem) {
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        textArea.remove();
+        if (successful) {
+          onCopySuccess(btnTextElem);
+        } else {
+          showToast('複製失敗，請手動全選上方文字複製');
+        }
+      } catch (err) {
+        showToast('複製失敗，請手動全選上方文字複製');
+      }
+    }
+
+    function onCopySuccess(btnTextElem) {
+      playChime('correct');
+      btnTextElem.innerText = '已成功複製 Prompt！';
+      showToast('📋 已複製專屬 AI 家教 Prompt！快貼到 ChatGPT 或 Gemini 開始學習吧！');
+      setTimeout(() => {
+        btnTextElem.innerText = '一鍵複製專屬 Prompt';
+      }, 2500);
+    }
+
+    // ==========================================
+    // 12. App Initialization
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      initArena3D();
+      switchTab('context');
+      updateLevelUI();
+      updateGamificationUI();
+      renderBadges();
+      generateAiPrompt();
+
+      // Enable audio on first user touch / click
+      document.body.addEventListener('click', () => {
+        initAudio();
+      }, { once: true });
+    });
+  </script>
+</body>
+</html>
